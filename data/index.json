@@ -1,0 +1,174 @@
+{
+  "entries": [
+    {
+      "id": "dyinglight2",
+      "name": "Dying Light 2",
+      "steam_appid": 534380
+    },
+    {
+      "id": "dyinglight",
+      "name": "Dying Light",
+      "steam_appid": 239140
+    },
+    {
+      "id": "dysonsphereprogram",
+      "name": "Dyson Sphere Program",
+      "steam_appid": 1366540
+    },
+    {
+      "id": "fallout4",
+      "name": "Fallout 4",
+      "steam_appid": 377160
+    },
+    {
+      "id": "farmtogether",
+      "name": "Farm Together",
+      "steam_appid": 673950
+    },
+    {
+      "id": "hogwartslegacy",
+      "name": "Hogwarts Legacy",
+      "steam_appid": 990080
+    },
+    {
+      "id": "horizonzerodawn",
+      "name": "Horizon Zero Dawn",
+      "steam_appid": 1151640
+    },
+    {
+      "id": "nomanssky",
+      "name": "No Man's Sky",
+      "steam_appid": 275850
+    },
+    {
+      "id": "payday2",
+      "name": "Payday 2",
+      "steam_appid": 218620
+    },
+    {
+      "id": "planetcoaster",
+      "name": "Planet Coaster",
+      "steam_appid": 493340
+    },
+    {
+      "id": "planetcrafter",
+      "name": "Planet Crafter",
+      "steam_appid": 1280880
+    },
+    {
+      "id": "planetzoo",
+      "name": "Planet Zoo",
+      "steam_appid": 703080
+    },
+    {
+      "id": "reddeadredemption2",
+      "name": "Red Dead Redemption 2",
+      "steam_appid": 1174180
+    },
+    {
+      "id": "reddeadredemption",
+      "name": "Red Dead Redemption",
+      "steam_appid": 349320
+    },
+    {
+      "id": "rimworld",
+      "name": "Rimworld",
+      "steam_appid": 294100
+    },
+    {
+      "id": "satisfactory",
+      "name": "Satisfactory",
+      "steam_appid": 526870
+    },
+    {
+      "id": "starbound",
+      "name": "Starbound",
+      "steam_appid": 211820
+    },
+    {
+      "id": "stardewvalley",
+      "name": "Stardew Valley",
+      "steam_appid": 413150
+    },
+    {
+      "id": "subnautica",
+      "name": "Subnautica",
+      "steam_appid": 264710
+    },
+    {
+      "id": "watchdogs2",
+      "name": "Watch Dogs 2",
+      "steam_appid": 447040
+    },
+    {
+      "id": "watchdogs",
+      "name": "Watch Dogs",
+      "steam_appid": 240720
+    },
+    {
+      "id": "witcher3",
+      "name": "The Witcher 3",
+      "steam_appid": 292030
+    },
+    {
+      "id": "xcom2",
+      "name": "XCOM 2",
+      "steam_appid": 268500
+    },
+    {
+      "id": "factorio",
+      "name": "Factorio",
+      "steam_appid": 427520,
+      "executables": [
+        {
+          "name": "Factorio",
+          "path": "factorio.exe"
+        },
+        {
+          "name": "Factorio (Linux)",
+          "path": "factorio"
+        }
+      ]
+    },
+    {
+      "id": "cyberpunk2077",
+      "name": "Cyberpunk 2077",
+      "steam_appid": 1091500
+    },
+    {
+      "id": "eldenring",
+      "name": "Elden Ring",
+      "steam_appid": 1245620
+    },
+    {
+      "id": "citiesinmotion",
+        "name": "Cities in Motion",
+        "steam_appid": 73010,
+        "executables": [
+          {
+            "name": "Cities in Motion",
+            "path": "cities in motion.exe"
+          },
+          {
+            "name": "Cities in Motion (Linux)",
+            "path": "cities in motion"
+          }
+        ]
+    },
+    {
+      "id": "citiesinmotion2",
+      "name": "Cities in Motion 2",
+      "steam_appid": 225420,
+      "executables": [
+        {
+          "name": "Cities in Motion 2",
+          "path": "cities in motion 2.exe"
+        },
+        {
+          "name": "Cities in Motion 2 (Linux)",
+          "path": "cities in motion 2"
+        }
+      ]
+    }
+  ]
+}

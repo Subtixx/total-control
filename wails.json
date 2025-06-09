@@ -1,0 +1,21 @@
+{
+  "name": "TotalControl",
+  "outputfilename": "TotalControl",
+  "assetdir": "frontend/dist",
+  "frontend:install": "npm install",
+  "frontend:build": "npm run build",
+  "frontend:dev:build": "npm run build-only",
+  "frontend:dev:watcher": "npm run dev",
+  "frontend:dev:serverUrl": "auto",
+  "debounceMS": 500,
+  "author": {
+    "name": "Dominic Hock",
+    "email": "d.hock@it-hock.de"
+  },
+  "info": {
+    "productName": "TotalControl",
+    "productVersion": "1.0.0",
+    "companyName": "IT-Hock",
+    "copyright": "© 2025 IT-Hock"
+  }
+}
