@@ -2,7 +2,6 @@
   "name": "total-control",
   "version": "1.0.0",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "commit": "git-cz",
     "release": "semantic-release",
     "lint": "cd frontend && npm run lint"
@@ -11,6 +10,7 @@
     "@commitlint/cli": "^19.8.1",
     "@commitlint/config-conventional": "^19.8.1",
     "husky": "^9.1.7",
-    "semantic-release": "^24.2.5"
+    "semantic-release": "^24.2.5",
+    "git-cz": "^4.9.0"
   }
 }

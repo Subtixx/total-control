@@ -1,2 +1,38 @@
 #!/bin/sh
-npm run lint && npm test
+FRONTEND_TEST=false
+BACKEND_TEST=false
+
+ROOT_DIR=$(pwd)
+cd "$ROOT_DIR"/frontend &&
+  npm run lint
+if [ $? -ne 0 ]; then
+  echo "Frontend Linting failed. Please fix the issues before committing."
+  exit 1
+fi
+
+if $FRONTEND_TEST; then
+  cd "$ROOT_DIR"/frontend &&
+    npm run test
+  if [ $? -ne 0 ]; then
+    echo "Frontend Tests failed. Please fix the issues before committing."
+    exit 1
+  fi
+fi
+
+cd "$ROOT_DIR" &&
+  go fmt ./... &&
+  go vet ./...
+if [ $? -ne 0 ]; then
+  echo "Backend Linting failed. Please fix the issues before committing."
+  exit 1
+fi
+
+if $BACKEND_TEST; then
+  cd "$ROOT_DIR" &&
+    go test -v ./...
+  if [ $? -ne 0 ]; then
+    echo "Backend Tests failed. Please fix the issues before committing."
+    exit 1
+  fi
+fi
+echo "All checks passed. Proceeding with commit."

@@ -7,6 +7,7 @@
     "preview": "vite preview --port 4173",
     "build-only": "vite build",
     "type-check": "vue-tsc --noEmit",
+    "test": "vitest",
     "lint": "eslint ./src --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix",
     "format": "prettier --write ."
   },
@@ -39,6 +40,7 @@
     "tailwindcss": "^4.1.8",
     "typescript": "^5.8.3",
     "vite": "6.3.5",
+    "vitest": "^3.2.3",
     "vue-tsc": "^2.2.10"
   }
 }
