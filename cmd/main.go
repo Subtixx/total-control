@@ -1,12 +1,108 @@
 package main
 
 import (
-	"TotalControl/backend/mods/factorio"
+	"TotalControl/backend/scripting"
 	"TotalControl/backend/utils"
 	"flag"
 	log "github.com/sirupsen/logrus"
+	lua "github.com/yuin/gopher-lua"
 	"os"
 )
+
+func testLuaEngine() {
+	luaEngine := scripting.NewLuaModProviderEngine()
+	if err := luaEngine.LoadScript(`
+local mods = {
+	{id = "mod1", name = "Mod One", author = "Author A", version = "1.0", enabled = true, game_versions = { {version = "1.0"} }},
+	{id = "mod2", name = "Mod Two", author = "Author B", version = "1.1", enabled = false, game_versions = { {version = "1.1"} }},
+}
+plugin = {
+	GetMods = function()
+		return mods
+	end,
+	GetModByID = function(id)
+		for _, mod in ipairs(mods) do
+			if mod.id == id then
+				return mod
+			end
+		end
+	end,
+	AddMod = function(mod)
+		log.Info("Adding mod:", mod.name)
+		return true
+	end,
+	RemoveMod = function(id)
+		log.Info("Removing mod with ID:", id)
+		return true
+	end,
+	UpdateMod = function(mod)
+		log.Info("Updating mod:", mod.name)
+		return true
+	end,
+	GetGameModDirectory = function()
+		return "/path/to/mods"
+	end,
+	GetGameID = function()
+		return "game123"
+	end,
+}
+log.debug("Lua script loaded successfully. Plugin table initialized with methods for mod management.")
+log.debug(operating_system.getOperatingSystem())
+if operating_system.is_windows then
+	log.debug("Running on Windows")
+elseif operating_system.is_linux then
+	log.debug("Running on Linux")
+elseif operating_system.is_macos then
+	log.debug("Running on MacOS")
+else
+	log.debug("Running on an unknown operating system")
+end
+`); err != nil {
+		log.Fatalf("Failed to load Lua script: %v", err)
+	}
+
+	// Get global plugin table
+	plugin := luaEngine.L.GetGlobal("plugin")
+	if plugin.Type() != lua.LTTable {
+		log.Fatal("Plugin table not found in Lua script")
+	}
+
+	// Validate plugin table
+	if luaEngine.L.GetField(plugin, "GetMods").Type() != lua.LTFunction {
+		log.Fatal("GetMods method not found in plugin table")
+	}
+	if luaEngine.L.GetField(plugin, "GetModByID").Type() != lua.LTFunction {
+		log.Fatal("GetModByID method not found in plugin table")
+	}
+	if luaEngine.L.GetField(plugin, "AddMod").Type() != lua.LTFunction {
+		log.Fatal("AddMod method not found in plugin table")
+	}
+	if luaEngine.L.GetField(plugin, "RemoveMod").Type() != lua.LTFunction {
+		log.Fatal("RemoveMod method not found in plugin table")
+	}
+	if luaEngine.L.GetField(plugin, "UpdateMod").Type() != lua.LTFunction {
+		log.Fatal("UpdateMod method not found in plugin table")
+	}
+	if luaEngine.L.GetField(plugin, "GetGameModDirectory").Type() != lua.LTFunction {
+		log.Fatal("GetGameModDirectory method not found in plugin table")
+	}
+	if luaEngine.L.GetField(plugin, "GetGameID").Type() != lua.LTFunction {
+		log.Fatal("GetGameID method not found in plugin table")
+	}
+
+	// Call GetMods method
+	foundMods, err := luaEngine.GetMods()
+	if err != nil {
+		log.Fatalf("Failed to get mods: %v", err)
+	}
+	if len(foundMods) == 0 {
+		log.Fatal("No mods found in Lua script")
+	}
+	for _, mod := range foundMods {
+		log.Infof("Found mod: ID=%s, Name=%s, Author=%s, Version=%s, Enabled=%t, GameVersions=%v",
+			mod.ID, mod.Name, mod.Author, mod.Version, mod.Enabled, mod.GameVersions)
+	}
+}
 
 func main() {
 	logPath := flag.String("log-path", "", "Path to log file (default: stdout)")
@@ -27,8 +123,23 @@ func main() {
 		level = log.InfoLevel
 	}
 	log.SetLevel(level)
+	log.SetReportCaller(true)
 	log.SetFormatter(&utils.CustomFormatter{})
 
+	// Test factorio lua
+	luaEngine := scripting.NewLuaModProviderEngine()
+	if err := luaEngine.LoadFile("plugins/factorio/plugin.lua"); err != nil {
+		log.Fatalf("Failed to load Lua file: %v", err)
+	}
+
+	if !luaEngine.IsValid() {
+		log.Fatal("Lua mod provider engine is not valid")
+	}
+	log.Info("Lua mod provider engine is valid")
+
+}
+
+/*
 	provider := factorio.FactorioModProvider{}
 	factorioMods, err := provider.GetMods()
 	if err != nil {
@@ -43,9 +154,6 @@ func main() {
 		log.Infof("Found mod: %s (ID: %s, Image: %d, Game Versions: %s, Author: %s)",
 			mod.Name, mod.ID, len(mod.Image), versions, mod.Author)
 	}
-}
-
-/*
 
 	gameIndex, err := games.NewGameIndex("data/index.json")
 	if err != nil {
