@@ -21,7 +21,7 @@ No ads, no tracking, no payments, no subscriptions, just a simple and effective 
 - 🧩 Easy mod management: Install, update, and remove mods effortlessly
 - 🔒 Safe and secure: Keeps your game files safe
 - 🌐 Modern UI: Built with Vue.js and TypeScript
-- 📦 Modular architecture: Easily extendable with plugins
+- 📦 Modular architecture: Easily extendable with plugins (plugins can be written in LUA for a low entry barrier)
 
 ## Project Structure
 
