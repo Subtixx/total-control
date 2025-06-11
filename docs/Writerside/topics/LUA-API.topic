@@ -20,6 +20,7 @@
             <title>Explore advanced features</title>
             <card href="Log.md" badge="presentation" summary="Logging utility for LUA scripts">Log</card>
             <card href="OperatingSystem.md" badge="world" summary="Access to operating system features">OperatingSystem</card>
+            <card href="InputOutput.md" badge="file" summary="Input/Output operations in LUA">InputOutput</card>
         </secondary>
 
         <!--
