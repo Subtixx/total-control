@@ -11,26 +11,38 @@ type CustomFormatter struct {
 }
 
 func (f *CustomFormatter) Format(entry *log.Entry) ([]byte, error) {
-	if entry.Data["stack"] != nil {
-		if stack, ok := entry.Data["stack"].(string); ok {
-			entry.Message += "\n" + stack
-		}
+	prefixes := []string{
+		fmt.Sprintf("[%s]", entry.Time.Format("15:04:05")),
+		fmt.Sprintf("[%s]", strings.ToUpper(entry.Level.String())),
 	}
 
-	formattedText := ""
 	if entry.Data["lua"] != nil {
-		formattedText = fmt.Sprintf("[%s] [%s] [LUA]: %s\n",
-			entry.Time.Format("15:04:05"),
-			strings.ToUpper(entry.Level.String()),
-			entry.Message,
-		)
-	} else {
-		formattedText = fmt.Sprintf("[%s] [%s]: %s\n",
-			entry.Time.Format("15:04:05"),
-			strings.ToUpper(entry.Level.String()),
-			entry.Message,
-		)
+		source, hasSource := entry.Data["source"].(string)
+		funcName, hasFunc := entry.Data["function"].(string)
+		line, hasLine := entry.Data["line"].(int)
+		if hasSource && hasFunc && hasLine {
+			prefixes = append(prefixes, fmt.Sprintf("[%s:%d %s]", source, line, funcName))
+		} else if hasSource && hasFunc {
+			prefixes = append(prefixes, fmt.Sprintf("[%s %s]", source, funcName))
+		} else if hasSource && hasLine {
+			prefixes = append(prefixes, fmt.Sprintf("[%s:%d]", source, line))
+		} else if hasFunc && hasLine {
+			prefixes = append(prefixes, fmt.Sprintf("[%s:%d]", funcName, line))
+		} else if hasSource {
+			prefixes = append(prefixes, fmt.Sprintf("[%s]", source))
+		} else if hasFunc {
+			prefixes = append(prefixes, fmt.Sprintf("[%s]", funcName))
+		} else if hasLine {
+			prefixes = append(prefixes, fmt.Sprintf("[%d]", line))
+		} else {
+			prefixes = append(prefixes, "[LUA]")
+		}
+
+		if plugin, ok := entry.Data["plugin"].(string); ok {
+			prefixes = append(prefixes, fmt.Sprintf("[Plugin: %s]", plugin))
+		}
 	}
+	formattedText := strings.Join(prefixes, " ") + " " + entry.Message + "\n"
 
 	return []byte(
 		formattedText,
