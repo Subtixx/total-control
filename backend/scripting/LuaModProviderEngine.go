@@ -21,6 +21,25 @@ func NewLuaModProviderEngine() *LuaModProviderEngine {
 	return luaEngine
 }
 
+func (p *LuaModProviderEngine) GetPlugin() (*lua.LTable, error) {
+	if p.L == nil {
+		return nil, fmt.Errorf("lua state is not initialized")
+	}
+	plugin := p.L.GetGlobal("plugin")
+	if plugin == lua.LNil {
+		return nil, fmt.Errorf("plugin global is not set in Lua state")
+	}
+
+	if plugin.Type() != lua.LTTable {
+		return nil, fmt.Errorf("plugin global is not a Lua table, got %s", plugin.Type().String())
+	}
+
+	if !p.IsValid() {
+		return nil, fmt.Errorf("plugin is not valid, missing required methods")
+	}
+	return plugin.(*lua.LTable), nil
+}
+
 func (p *LuaModProviderEngine) IsValid() bool {
 	plugin := p.L.GetGlobal("plugin")
 	if plugin.Type() != lua.LTTable {
@@ -106,20 +125,20 @@ func (p *LuaModProviderEngine) GetModByID(id string) (*mods.Mod, error) {
 	return mod, nil
 }
 
-func (p *LuaModProviderEngine) GetGameModDirectory() string {
-	plugin := p.L.GetGlobal("plugin")
-	if plugin.Type() != lua.LTTable {
-		log.Fatal("plugin global is not a Lua table, got " + plugin.Type().String())
+func (p *LuaModProviderEngine) GetGameModDirectory() (string, error) {
+	plugin, err := p.GetPlugin()
+	if err != nil {
+		return "", fmt.Errorf("failed to get plugin: %v", err)
 	}
 
 	val, err := p.Call(plugin, "GetGameModDirectory")
 	if err != nil {
-		log.Fatalf("failed to get game mod directory: %v", err)
+		return "", fmt.Errorf("failed to get game mod directory: %v", err)
 	}
 
 	if val.Type() != lua.LTString {
-		log.Fatalf("expected Lua string for game mod directory, got %s", val.Type().String())
+		return "", fmt.Errorf("expected Lua string for game mod directory, got %s", val.Type().String())
 	}
 
-	return val.String()
+	return val.String(), nil
 }

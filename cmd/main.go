@@ -149,7 +149,11 @@ func main() {
 			mod.ID, mod.Name, mod.Author, mod.Version, mod.Enabled, mod.GameVersions)
 	}
 
-	modPath := luaEngine.GetGameModDirectory()
+	modPath, err := luaEngine.GetGameModDirectory()
+	if err != nil {
+		log.Fatalf("Failed to get game mod directory: %v", err)
+		return
+	}
 	log.Infof("Game mod directory: %s", modPath)
 }
 
