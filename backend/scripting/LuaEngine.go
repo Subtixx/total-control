@@ -13,6 +13,13 @@ type LuaEngine struct {
 	L *lua.LState
 }
 
+func luaCreateJsonTable(l *lua.LState) *lua.LTable {
+	jsonTable := l.NewTable()
+	jsonTable.RawSetString("encode", l.NewFunction(utils.LuaJsonEncode))
+	jsonTable.RawSetString("decode", l.NewFunction(utils.LuaJsonDecode))
+	return jsonTable
+}
+
 func luaCreateLogTable(L *lua.LState) *lua.LTable {
 	// Log table with (log.info, log.warn, log.error, etc.) functions
 	logTable := L.NewTable()
@@ -169,6 +176,7 @@ func (l *LuaEngine) Setup() {
 	l.L.SetGlobal("error_handler", l.L.NewFunction(luaErrorHandler))
 	l.L.SetGlobal("os_getenv", l.L.NewFunction(luaOsGetenv))
 	l.L.SetGlobal("operating_system", luaCreateOperatingSystemTable(l.L))
+	l.L.SetGlobal("json", luaCreateJsonTable(l.L)) // Assuming you have a function to create a JSON table
 
 	l.L.SetGlobal("log", luaCreateLogTable(l.L))
 }
