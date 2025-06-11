@@ -53,7 +53,6 @@ func (p *LuaModProviderEngine) GetMods() ([]mods.Mod, error) {
 	if luaGameId.Type() != lua.LTString {
 		return nil, fmt.Errorf("expected Lua string for game ID, got %s", luaGameId.Type().String())
 	}
-	gameID := luaGameId.String()
 
 	val, err := p.Call(plugin, "GetMods")
 	if err != nil {
