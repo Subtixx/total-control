@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE instance-profile
+        SYSTEM "https://resources.jetbrains.com/writerside/1.0/product-profile.dtd">
+
+<instance-profile id="t"
+                  name="total-control"
+                  start-page="starter-topic.md">
+    <toc-element toc-title="LUA" topic="LUA-API.topic">
+        <toc-element topic="ModObject.md"/>
+        <toc-element topic="Log.md">
+            <toc-element topic="LogDebug.md"/>
+            <toc-element topic="LogInfo.md"/>
+            <toc-element topic="LogWarning.md"/>
+            <toc-element topic="LogError.md"/>
+        </toc-element>
+        <toc-element topic="Plugin.md"/>
+        <toc-element topic="OperatingSystem.md">
+            <toc-element topic="GetEnv.md"/>
+            <toc-element topic="GetOperatingSystem.md"/>
+
+            <toc-element toc-title="Linux">
+                <toc-element topic="Linux.md" toc-title="Linux (constant)"/>
+                <toc-element topic="is_linux.md"/>
+            </toc-element>
+            <toc-element toc-title="Windows">
+                <toc-element topic="Windows.md" toc-title="Windows (constant)"/>
+                <toc-element topic="is_windows.md"/>
+            </toc-element>
+            <toc-element toc-title="MacOS">
+                <toc-element topic="MacOS.md" toc-title="MacOS (constant)"/>
+                <toc-element topic="is_macos.md"/>
+            </toc-element>
+            <toc-element toc-title="Unknown">
+                <toc-element topic="Unknown.md" toc-title="Unknown (constant)"/>
+            </toc-element>
+        </toc-element>
+    </toc-element>
+    <toc-element topic="starter-topic.md"/>
+</instance-profile>

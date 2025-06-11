@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic
+        SYSTEM "https://resources.jetbrains.com/writerside/1.0/xhtml-entities.dtd">
+<topic xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:noNamespaceSchemaLocation="https://resources.jetbrains.com/writerside/1.0/topic.v2.xsd"
+       title="LUA API" id="LUA-API">
+
+    <section-starting-page>
+        <title>LUA API</title>
+        <description>
+            The LUA API section provides comprehensive documentation for %product%
+        </description>
+
+        <spotlight>
+            <card href="ModObject.md" badge="development" summary="Represents a mod object in LUA API">ModObject</card>
+            <card href="Plugin.md" badge="server" summary="Main entry point for LUA plugins">Plugin</card>
+        </spotlight>
+
+        <secondary>
+            <title>Explore advanced features</title>
+            <card href="Log.md" badge="presentation" summary="Logging utility for LUA scripts">Log</card>
+            <card href="OperatingSystem.md" badge="world" summary="Access to operating system features">OperatingSystem</card>
+        </secondary>
+
+        <!--
+        <primary>
+            <title>Get started</title>
+        </primary>
+
+        <misc>
+            <cards>
+                <title>Other relevant topics as wide cards</title>
+            </cards>
+
+            <cards narrow="true">
+                <title>Other relevant topics as narrow cards</title>
+            </cards>
+
+            <links>
+                <group>
+                    <title>Other related topics as links</title>
+                </group>
+                <group>
+                    <title>Two in a row</title>
+                </group>
+            </links>
+
+            <links narrow="true">
+                <group>
+                    <title>More related topics</title>
+                </group>
+                <group>
+                    <title>Three in a row</title>
+                </group>
+                <group>
+                    <title>Each group is narrow</title>
+                </group>
+            </links>
+        </misc>-->
+    </section-starting-page>
+</topic>

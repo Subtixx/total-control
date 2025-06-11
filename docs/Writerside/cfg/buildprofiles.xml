@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE buildprofiles SYSTEM "https://resources.jetbrains.com/writerside/1.0/build-profiles.dtd">
+<buildprofiles xsi:noNamespaceSchemaLocation="https://resources.jetbrains.com/writerside/1.0/build-profiles.xsd"
+               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <llms-txt single-file="true"/>
+    <shortcuts></shortcuts>
+    <variables>
+        <download-page>https://github.com/subtixx/total-control/</download-page>
+        <download-title>Get TotalControl</download-title>
+        <showDownloadButton>true</showDownloadButton>
+        <primary-color>blueberry</primary-color>
+        <color-preset>soft</color-preset>
+        <header-logo>../../../frontend/src/assets/icon.svg</header-logo>
+        <!--<custom-css>custom.css</custom-css>-->
+    </variables>
+
+    <footer>
+        <link href="https://github.com/subtixx/total-control/issues">GitHub Issues</link>
+
+        <copyright>2025 IT-Hock</copyright>
+    </footer>
+
+    <build-profile instance="t">
+        <variables>
+            <noindex-content>true</noindex-content>
+        </variables>
+    </build-profile>
+
+</buildprofiles>

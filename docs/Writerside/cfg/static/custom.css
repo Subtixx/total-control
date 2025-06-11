@@ -1,0 +1,125 @@
+:root.theme-dark {
+    --dracula-background: rgb(40, 42, 54);
+    --dracula-current-line: rgb(68, 71, 90);
+    --dracula-foreground: rgb(248, 248, 242);
+    --dracula-comment: rgb(98, 114, 164);
+    --dracula-cyan: rgb(139, 233, 253);
+    --dracula-green: rgb(80, 250, 123);
+    --dracula-orange: rgb(255, 184, 108);
+    --dracula-pink: rgb(255, 121, 198);
+    --dracula-purple: rgb(189, 147, 249);
+    --dracula-red: rgb(255, 85, 85);
+    --dracula-yellow: rgb(241, 250, 140);
+
+    --app-header: rgb(68, 71, 90);
+    --app-footer: rgb(68, 71, 90);
+    --app-link-color-dark: rgb(189, 147, 249);
+    --app-link-border-color-dark: rgba(0, 0, 0, 0);
+
+    --rs-color-primary-dark-theme: rgb(189, 147, 249);
+    --rs-color-primary-t-dim-dark-theme: rgba(189, 147, 249, 0.2);
+    --rs-color-success: rgb(80, 250, 123);
+    --rs-color-error: rgb(255, 85, 85);
+    --rs-color-warning: rgb(241, 250, 140);
+    --rs-color-info: rgb(139, 233, 253);
+
+    --rs-color-success-bg: rgba(80, 250, 123, 0.1);
+    --rs-color-error-bg: rgba(255, 85, 85, 0.1);
+    --rs-color-warning-bg: rgba(241, 250, 140, 0.1);
+    --rs-color-info-bg: rgba(139, 233, 253, 0.1);
+
+    --rs-button-border-radius: 5px;
+
+    --wh-color-black: rgb(40, 42, 54);
+    --wh-color-bg-main: rgb(40, 42, 54);
+    --wh-color-backlight-pale: rgb(68, 71, 90);
+    --wh-color-text-main: rgb(248, 248, 242);
+    --wh-color-border-default: rgb(68, 71, 90);
+
+    --wh-color-substrate: rgba(0, 0, 0, 0);
+
+    --wh-color-success-t20: rgba(80, 250, 123, 0.2);
+    --wh-color-error-t20: rgba(255, 85, 85, 0.2);
+    --wh-color-warning-t20: rgba(241, 250, 140, 0.2);
+    --wh-color-info-t20: rgba(139, 233, 253, 0.2);
+}
+
+.code-block--dark {
+    background-color: rgba(68, 71, 90, 0.1);
+    color: rgb(248, 248, 242);
+}
+
+.code-block--dark .prism--token.prism--builtin,
+.code-block--dark .prism--token.prism--doctype,
+.code-block--dark .prism--token.prism--tag,
+.code-block--dark .prism--token.prism--tag .prism--punctuation,
+.code-collapse--dark .prism--token.prism--builtin,
+.code-collapse--dark .prism--token.prism--doctype,
+.code-collapse--dark .prism--token.prism--tag,
+.code-collapse--dark .prism--token.prism--tag .prism--punctuation,
+.code-comparer--dark .prism--token.prism--builtin,
+.code-comparer--dark .prism--token.prism--doctype,
+.code-comparer--dark .prism--token.prism--tag,
+.code-comparer--dark .prism--token.prism--tag .prism--punctuation {
+    color: rgb(189, 147, 249);
+}
+
+.code-block--dark .prism--token.prism--attr-value,
+.code-block--dark .prism--token.prism--attr-value .prism--punctuation,
+.code-collapse--dark .prism--token.prism--attr-value,
+.code-collapse--dark .prism--token.prism--attr-value .prism--punctuation,
+.code-comparer--dark .prism--token.prism--attr-value,
+.code-comparer--dark .prism--token.prism--attr-value .prism--punctuation {
+    color: rgb(80, 250, 123);
+}
+
+.code-block--dark .prism--token.prism--attr-name,
+.code-block--dark .prism--token.prism--operator,
+.code-block--dark .prism--token.prism--punctuation,
+.code-collapse--dark .prism--token.prism--attr-name,
+.code-collapse--dark .prism--token.prism--operator,
+.code-collapse--dark .prism--token.prism--punctuation,
+.code-comparer--dark .prism--token.prism--attr-name,
+.code-comparer--dark .prism--token.prism--operator,
+.code-comparer--dark .prism--token.prism--punctuation {
+    color: rgb(255, 184, 108);
+}
+
+.code-block--dark code[class*="language-"],
+.code-block--dark pre[class*="language-"],
+.code-collapse--dark code[class*="language-"],
+.code-collapse--dark pre[class*="language-"],
+.code-comparer--dark code[class*="language-"],
+.code-comparer--dark pre[class*="language-"] {
+    color: rgb(248, 248, 242);
+}
+
+.code {
+    border-radius: 5px;
+    background-color: var(--dracula-current-line);
+}
+
+/*pre[class*="language-"] code {
+    font-family: "Fira Code", "Courier New", Courier, monospace;
+}*/
+
+.article__img {
+    border-radius: 30px !important;
+}
+
+.search-dark-theme {
+    --bg-color: var(--dracula-background);
+    --bg-full-color: var(--dracula-background);
+    --loading-color: var(--dracula-foreground);
+    --primary-text-color: var(--dracula-foreground);
+    --secondary-text-color: var(--dracula-comment);
+    --highlight-color: var(--dracula-purple);
+    --border-color: var(--dracula-current-line);
+}
+
+/* Search input */
+.search__input > div > label > div {
+    background-color: var(--dracula-current-line) !important;
+    color: var(--dracula-foreground) !important;
+    border-color: var(--dracula-purple) !important;
+}

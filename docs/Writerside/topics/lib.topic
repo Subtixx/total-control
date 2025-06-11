@@ -1,0 +1,19 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE topic SYSTEM "https://resources.jetbrains.com/writerside/1.0/html-entities.dtd">
+<topic xsi:noNamespaceSchemaLocation="https://resources.jetbrains.com/writerside/1.0/topic.v2.xsd"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" is-library="true" id="lib" title="LuaOsFooter"
+       help-id="luaosfooter">
+    <snippet id="lua.os.footer">
+        <seealso>
+            <category ref="operating_system">
+                <a href="Linux.md" filter="windows,macos,unknown">Linux</a>
+                <a href="is_linux.md" filter="windows,macos,unknown">is_linux</a>
+                <a href="MacOS.md" filter="windows,linux,unknown">MacOS</a>
+                <a href="is_macos.md" filter="windows,linux,unknown">is_macos</a>
+                <a href="Windows.md" filter="linux,macos,unknown">Windows</a>
+                <a href="is_windows.md" filter="linux,macos,unknown">is_windows</a>
+                <a href="Unknown.md" filter="linux,macos,windows">Unknown</a>
+            </category>
+        </seealso>
+    </snippet>
+</topic>
