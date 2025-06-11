@@ -20,6 +20,15 @@ func luaCreateJsonTable(l *lua.LState) *lua.LTable {
 	return jsonTable
 }
 
+func luaCreateInputOutputUtilityTable(L *lua.LState) *lua.LTable {
+	ioTable := L.NewTable()
+	ioTable.RawSetString("readFileFromZip", L.NewFunction(utils.LuaReadFileFromZip))
+	ioTable.RawSetString("readFilesFromZip", L.NewFunction(utils.LuaReadFilesFromZip))
+	ioTable.RawSetString("getFilesInDirectory", L.NewFunction(utils.LuaGetFilesInDirectory))
+	ioTable.RawSetString("getFileName", L.NewFunction(utils.LuaGetFileName))
+	return ioTable
+}
+
 func luaCreateLogTable(L *lua.LState) *lua.LTable {
 	// Log table with (log.info, log.warn, log.error, etc.) functions
 	logTable := L.NewTable()
@@ -176,6 +185,7 @@ func (l *LuaEngine) Setup() {
 	l.L.SetGlobal("error_handler", l.L.NewFunction(luaErrorHandler))
 	l.L.SetGlobal("os_getenv", l.L.NewFunction(luaOsGetenv))
 	l.L.SetGlobal("operating_system", luaCreateOperatingSystemTable(l.L))
+	l.L.SetGlobal("input_output", luaCreateInputOutputUtilityTable(l.L))
 	l.L.SetGlobal("json", luaCreateJsonTable(l.L)) // Assuming you have a function to create a JSON table
 
 	l.L.SetGlobal("log", luaCreateLogTable(l.L))
