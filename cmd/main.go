@@ -137,6 +137,20 @@ func main() {
 	}
 	log.Info("Lua mod provider engine is valid")
 
+	foundMods, err := luaEngine.GetMods()
+	if err != nil {
+		log.Fatalf("Failed to get mods: %v", err)
+	}
+	if len(foundMods) == 0 {
+		log.Fatal("No mods found in Lua script")
+	}
+	for _, mod := range foundMods {
+		log.Infof("Found mod: ID=%s, Name=%s, Author=%s, Version=%s, Enabled=%t, GameVersions=%v",
+			mod.ID, mod.Name, mod.Author, mod.Version, mod.Enabled, mod.GameVersions)
+	}
+
+	modPath := luaEngine.GetGameModDirectory()
+	log.Infof("Game mod directory: %s", modPath)
 }
 
 /*
