@@ -16,6 +16,8 @@
         <toc-element topic="InputOutput.md">
             <toc-element topic="ReadFilesFromZip.md"/>
             <toc-element topic="ReadFileFromZip.md"/>
+            <toc-element topic="GetFilesInDirectory.md"/>
+            <toc-element topic="GetFileName.md"/>
         </toc-element>
         <toc-element topic="Plugin.md"/>
         <toc-element topic="OperatingSystem.md">

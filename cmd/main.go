@@ -17,7 +17,7 @@ local mods = {
 	{id = "mod2", name = "Mod Two", author = "Author B", version = "1.1", enabled = false, game_versions = { {version = "1.1"} }},
 }
 plugin = {
-	GetMods = function()
+	GetInstalledMods = function()
 		return mods
 	end,
 	GetModByID = function(id)
@@ -68,8 +68,8 @@ end
 	}
 
 	// Validate plugin table
-	if luaEngine.L.GetField(plugin, "GetMods").Type() != lua.LTFunction {
-		log.Fatal("GetMods method not found in plugin table")
+	if luaEngine.L.GetField(plugin, "GetInstalledMods").Type() != lua.LTFunction {
+		log.Fatal("GetInstalledMods method not found in plugin table")
 	}
 	if luaEngine.L.GetField(plugin, "GetModByID").Type() != lua.LTFunction {
 		log.Fatal("GetModByID method not found in plugin table")
@@ -90,8 +90,8 @@ end
 		log.Fatal("GetGameID method not found in plugin table")
 	}
 
-	// Call GetMods method
-	foundMods, err := luaEngine.GetMods()
+	// Call GetInstalledMods method
+	foundMods, err := luaEngine.GetInstalledMods()
 	if err != nil {
 		log.Fatalf("Failed to get mods: %v", err)
 	}
@@ -137,7 +137,7 @@ func main() {
 	}
 	log.Info("Lua mod provider engine is valid")
 
-	foundMods, err := luaEngine.GetMods()
+	foundMods, err := luaEngine.GetInstalledMods()
 	if err != nil {
 		log.Fatalf("Failed to get mods: %v", err)
 	}
@@ -159,7 +159,7 @@ func main() {
 
 /*
 	provider := factorio.FactorioModProvider{}
-	factorioMods, err := provider.GetMods()
+	factorioMods, err := provider.GetInstalledMods()
 	if err != nil {
 		panic(err)
 	}

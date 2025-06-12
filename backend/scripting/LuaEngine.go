@@ -1,173 +1,20 @@
 package scripting
 
+// TODO: measure time and kill the lua file if it takes too long to execute
+// TODO: Create threads for each lua script execution
+
 import (
-	"TotalControl/backend/utils"
+	"context"
+	"errors"
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	lua "github.com/yuin/gopher-lua"
-	"os"
 	"strings"
+	"time"
 )
 
 type LuaEngine struct {
 	L *lua.LState
-}
-
-func luaCreateJsonTable(l *lua.LState) *lua.LTable {
-	jsonTable := l.NewTable()
-	jsonTable.RawSetString("encode", l.NewFunction(utils.LuaJsonEncode))
-	jsonTable.RawSetString("decode", l.NewFunction(utils.LuaJsonDecode))
-	return jsonTable
-}
-
-func luaCreateInputOutputUtilityTable(L *lua.LState) *lua.LTable {
-	ioTable := L.NewTable()
-	ioTable.RawSetString("readFileFromZip", L.NewFunction(utils.LuaReadFileFromZip))
-	ioTable.RawSetString("readFilesFromZip", L.NewFunction(utils.LuaReadFilesFromZip))
-	ioTable.RawSetString("getFilesInDirectory", L.NewFunction(utils.LuaGetFilesInDirectory))
-	ioTable.RawSetString("getFileName", L.NewFunction(utils.LuaGetFileName))
-	return ioTable
-}
-
-func luaCreateLogTable(L *lua.LState) *lua.LTable {
-	// Log table with (log.info, log.warn, log.error, etc.) functions
-	logTable := L.NewTable()
-	logTable.RawSetString("debug", L.NewFunction(func(L *lua.LState) int {
-		msg := L.ToString(1)
-		log.WithField("lua", true).Debug(msg)
-		return 0
-	}))
-	logTable.RawSetString("info", L.NewFunction(func(L *lua.LState) int {
-		msg := L.ToString(1)
-		log.WithField("lua", true).Info(msg)
-		return 0
-	}))
-	logTable.RawSetString("warn", L.NewFunction(func(L *lua.LState) int {
-		msg := L.ToString(1)
-		log.WithField("lua", true).Warn(msg)
-		return 0
-	}))
-	logTable.RawSetString("error", L.NewFunction(func(L *lua.LState) int {
-		msg := L.ToString(1)
-		log.WithField("lua", true).Error(msg)
-		return 0
-	}))
-	return logTable
-}
-
-func luaCreateOperatingSystemTable(L *lua.LState) *lua.LTable {
-	osTable := L.NewTable()
-	L.SetField(osTable, "Windows", lua.LNumber(1))
-	L.SetField(osTable, "Linux", lua.LNumber(2))
-	L.SetField(osTable, "MacOS", lua.LNumber(3))
-	L.SetField(osTable, "Unknown", lua.LNumber(0))
-
-	L.SetField(osTable, "getOperatingSystem", L.NewFunction(luaGetOperatingSystem))
-	//L.SetField(osTable, "isWindows", L.NewFunction(luaIsWindows))
-	//L.SetField(osTable, "isLinux", L.NewFunction(luaIsLinux))
-	//L.SetField(osTable, "isMacOS", L.NewFunction(luaIsMacOS))
-	L.SetField(osTable, "is_windows", lua.LFalse)
-	L.SetField(osTable, "is_linux", lua.LFalse)
-	L.SetField(osTable, "is_macos", lua.LFalse)
-	L.SetField(osTable, "is_unknown", lua.LFalse)
-	switch utils.GetOperatingSystem() {
-	case utils.WindowsOS:
-		L.SetField(osTable, "is_windows", lua.LTrue)
-	case utils.LinuxOS:
-		L.SetField(osTable, "is_linux", lua.LTrue)
-	case utils.MacOS:
-		L.SetField(osTable, "is_macos", lua.LTrue)
-	default:
-		L.SetField(osTable, "is_unknown", lua.LTrue)
-	}
-	L.SetField(osTable, "getenv", L.NewFunction(luaOsGetenv))
-	return osTable
-}
-
-func luaPrint(L *lua.LState) int {
-	// Print function that captures Lua print calls
-	for i := 1; i <= L.GetTop(); i++ {
-		if str, ok := L.Get(i).(lua.LString); ok {
-			// Log with context lua
-			log.WithField("lua", true).Info(str.String())
-		} else {
-			log.WithField("lua", true).Info(L.Get(i).Type().String(), ": ", L.Get(i))
-		}
-	}
-	return 0
-}
-
-func luaErrorHandler(L *lua.LState) int {
-	// Custom error handler for Lua
-	if err := L.ToString(1); err != "" {
-		println("Lua Error:", L.ToString(1))
-	}
-	return 0
-}
-
-func luaOsGetenv(L *lua.LState) int {
-	key := L.ToString(1)
-	if key == "" {
-		L.Push(lua.LNil)
-		return 1
-	}
-
-	value, exists := os.LookupEnv(key)
-	if !exists {
-		L.Push(lua.LNil)
-		return 1
-	}
-
-	L.Push(lua.LString(value))
-	return 1
-}
-
-func luaGetOperatingSystem(L *lua.LState) int {
-	// 1 - Windows, 2 - Linux, 3 - MacOS, 0 - Unknown
-	switch utils.GetOperatingSystem() {
-	case utils.WindowsOS:
-		L.Push(lua.LNumber(1))
-		return 1
-	case utils.LinuxOS:
-		L.Push(lua.LNumber(2))
-		return 1
-	case utils.MacOS:
-		L.Push(lua.LNumber(3))
-		return 1
-	default:
-		L.Push(lua.LNumber(0))
-		return 1
-	}
-}
-
-func luaIsWindows(L *lua.LState) int {
-	// Check if the current operating system is Windows
-	if utils.GetOperatingSystem() == utils.WindowsOS {
-		L.Push(lua.LTrue)
-	} else {
-		L.Push(lua.LFalse)
-	}
-	return 1
-}
-
-func luaIsLinux(L *lua.LState) int {
-	// Check if the current operating system is Linux
-	if utils.GetOperatingSystem() == utils.LinuxOS {
-		L.Push(lua.LTrue)
-	} else {
-		L.Push(lua.LFalse)
-	}
-	return 1
-}
-
-func luaIsMacOS(L *lua.LState) int {
-	// Check if the current operating system is MacOS
-	if utils.GetOperatingSystem() == utils.MacOS {
-		L.Push(lua.LTrue)
-	} else {
-		L.Push(lua.LFalse)
-	}
-	return 1
 }
 
 func NewLuaEngine() *LuaEngine {
@@ -183,12 +30,12 @@ func (l *LuaEngine) Setup() {
 	l.L.OpenLibs() // This could be really bad if we allow all libraries!
 	l.L.SetGlobal("print", l.L.NewFunction(luaPrint))
 	l.L.SetGlobal("error_handler", l.L.NewFunction(luaErrorHandler))
-	l.L.SetGlobal("os_getenv", l.L.NewFunction(luaOsGetenv))
-	l.L.SetGlobal("operating_system", luaCreateOperatingSystemTable(l.L))
-	l.L.SetGlobal("input_output", luaCreateInputOutputUtilityTable(l.L))
-	l.L.SetGlobal("json", luaCreateJsonTable(l.L)) // Assuming you have a function to create a JSON table
 
-	l.L.SetGlobal("log", luaCreateLogTable(l.L))
+	luaRegisterLogObject(l.L)
+	luaRegisterJsonObject(l.L)
+	luaExtendIoTable(l.L)
+	luaExtendOsTable(l.L)
+	luaRegisterHttpObject(l.L)
 }
 
 func (l *LuaEngine) CheckLuaError(err error) {
@@ -215,6 +62,24 @@ func (l *LuaEngine) LoadFile(filename string) error {
 		return err
 	}
 	return nil
+}
+
+func (l *LuaEngine) DoStringWithTimeout(script string, timeout time.Duration) error {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	errCh := make(chan error, 1)
+	go func() {
+		errCh <- l.L.DoString(script)
+	}()
+
+	select {
+	case <-ctx.Done():
+		l.L.Close() // forcibly close the Lua state
+		return errors.New("Lua script execution timed out")
+	case err := <-errCh:
+		return err
+	}
 }
 
 func (l *LuaEngine) CallGlobal(method string, args ...lua.LValue) (lua.LValue, error) {

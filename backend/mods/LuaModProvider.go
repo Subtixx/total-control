@@ -1,5 +1,7 @@
 package mods
 
+// TODO: Rename from LuaModProvider to LuaGameProvider (since the goal is to provide game mods, game saves, maps etc)
+
 import (
 	"fmt"
 	"github.com/yuin/gopher-lua"
@@ -68,7 +70,7 @@ func (p *LuaModProvider) call(method string, args ...lua.LValue) (lua.LValue, er
 
 // GetMods Implement ModProvider methods by calling Lua
 func (p *LuaModProvider) GetMods() ([]Mod, error) {
-	val, err := p.call("GetMods")
+	val, err := p.call("GetInstalledMods")
 	if err != nil {
 		return nil, fmt.Errorf("failed to get mods: %v", err)
 	}

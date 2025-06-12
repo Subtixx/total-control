@@ -48,7 +48,9 @@ func (p *LuaModProviderEngine) IsValid() bool {
 	}
 
 	pluginMethods := []string{
-		"GetMods", "GetModByID", "AddMod", "RemoveMod", "UpdateMod", "GetGameModDirectory", "GetGameID",
+		"GetInstalledMods", "GetInstalledModByID",
+		"GetMods", "GetModByID",
+		"AddMod", "RemoveMod", "UpdateMod", "GetGameModDirectory", "GetGameID",
 	}
 	for _, method := range pluginMethods {
 		if !p.HasMethod(plugin, method) {
@@ -59,7 +61,7 @@ func (p *LuaModProviderEngine) IsValid() bool {
 	return true
 }
 
-func (p *LuaModProviderEngine) GetMods() ([]mods.Mod, error) {
+func (p *LuaModProviderEngine) GetInstalledMods() ([]mods.Mod, error) {
 	plugin := p.L.GetGlobal("plugin")
 	if plugin.Type() != lua.LTTable {
 		return nil, fmt.Errorf("plugin global is not a Lua table, got %s", plugin.Type().String())
@@ -73,7 +75,7 @@ func (p *LuaModProviderEngine) GetMods() ([]mods.Mod, error) {
 		return nil, fmt.Errorf("expected Lua string for game ID, got %s", luaGameId.Type().String())
 	}
 
-	val, err := p.Call(plugin, "GetMods")
+	val, err := p.Call(plugin, "GetInstalledMods")
 	if err != nil {
 		return nil, fmt.Errorf("failed to get mods: %v", err)
 	}

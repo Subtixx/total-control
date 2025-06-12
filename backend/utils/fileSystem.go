@@ -1,57 +1,24 @@
 package utils
 
 import (
-	lua "github.com/yuin/gopher-lua"
 	"os"
 	"path/filepath"
 )
 
-func LuaGetFilesInDirectory(L *lua.LState) int {
-	dir := L.ToString(1)
-	patterns := make([]string, 0)
-
-	if L.Get(2).Type() == lua.LTTable {
-		patternTable := L.ToTable(2)
-		patternTable.ForEach(func(key lua.LValue, value lua.LValue) {
-			if value.Type() == lua.LTString {
-				patterns = append(patterns, value.String())
-			}
-		})
-	} else if L.Get(2).Type() == lua.LTString {
-		patterns = append(patterns, L.ToString(2))
-	} else {
-		L.RaiseError("Second argument must be a string or a table of strings")
-		return 0
-	}
-
-	files, err := GetFilesByWildcards(dir, patterns)
-	if err != nil {
-		L.RaiseError("Error getting files: %v", err)
-		return 0
-	}
-
-	luaFiles := L.CreateTable(len(files), 0)
-	for _, file := range files {
-		luaFiles.Append(lua.LString(file))
-	}
-
-	L.Push(luaFiles)
-	return 1
-}
-
-func LuaGetFileName(L *lua.LState) int {
-	filePath := L.ToString(1)
-	if filePath == "" {
-		L.Push(lua.LNil)
-		return 1
-	}
-
+func GetFileNameWithoutExtension(filePath string) string {
+	// Extract the file name from the file path
 	fileName := filepath.Base(filePath)
-	L.Push(lua.LString(fileName))
-	return 1
+	// Get the file extension
+	fileExtension := filepath.Ext(fileName)
+	// Remove the extension from the file name
+	return fileName[:len(fileName)-len(fileExtension)]
 }
 
 func GetFilesByWildcards(dir string, patterns []string) ([]string, error) {
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		return nil, err
+	}
+
 	var matchedFiles []string
 
 	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {

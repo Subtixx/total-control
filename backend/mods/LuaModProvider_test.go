@@ -41,7 +41,7 @@ func setupLuaModProvider(t *testing.T, luaScript string) *LuaModProvider {
 func TestLuaModProvider_GetMods(t *testing.T) {
 	luaScript := `
 		plugin = {
-			GetMods = function()
+			GetInstalledMods = function()
 				return {
 					{ id = "mod1", name = "Test Mod", enabled = true, game_id = "game1" },
 					{ id = "mod2", name = "Another Mod", enabled = false, game_id = "game2" }
@@ -95,7 +95,7 @@ func TestLuaModProvider_Integration(t *testing.T) {
 	// Realistic Lua script mimicking plugin behavior
 	luaScript := `
 		plugin = {
-			GetMods = function()
+			GetInstalledMods = function()
 				return {
 					{ id = "mod1", name = "Test Mod", enabled = true, game_id = "game1" },
 					{ id = "mod2", name = "Another Mod", enabled = false, game_id = "game2" }
@@ -134,7 +134,7 @@ func TestLuaModProvider_Integration(t *testing.T) {
 	assert.NoError(t, err)
 	defer provider.Close()
 
-	// Test GetMods
+	// Test GetInstalledMods
 	mods, err := provider.GetMods()
 	assert.NoError(t, err)
 	assert.Len(t, mods, 2)
@@ -159,7 +159,7 @@ func TestLuaModProvider_Integration(t *testing.T) {
 func TestLuaModProvider_Performance(t *testing.T) {
 	luaScript := `
 		plugin = {
-			GetMods = function()
+			GetInstalledMods = function()
 				local mods = {}
 				for i = 1, 1000 do
 					table.insert(mods, { id = "mod" .. i, name = "Mod " .. i, enabled = true, game_id = "game" .. i })
@@ -172,14 +172,14 @@ func TestLuaModProvider_Performance(t *testing.T) {
 	provider := setupLuaModProvider(t, luaScript)
 	defer provider.Close()
 
-	// Measure execution time for GetMods
+	// Measure execution time for GetInstalledMods
 	start := time.Now()
 	mods, err := provider.GetMods()
 	duration := time.Since(start)
 
 	assert.NoError(t, err)
 	assert.Len(t, mods, 1000)
-	t.Logf("GetMods execution time: %v", duration)
+	t.Logf("GetInstalledMods execution time: %v", duration)
 
 	// Simulate high load with concurrent calls (each with its own provider)
 	var wg sync.WaitGroup
@@ -198,5 +198,5 @@ func TestLuaModProvider_Performance(t *testing.T) {
 	}
 	wg.Wait()
 	duration = time.Since(start)
-	t.Logf("Concurrent GetMods execution time: %v", duration)
+	t.Logf("Concurrent GetInstalledMods execution time: %v", duration)
 }

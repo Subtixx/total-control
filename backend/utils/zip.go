@@ -4,59 +4,9 @@ import (
 	"archive/zip"
 	"bytes"
 	"fmt"
-	lua "github.com/yuin/gopher-lua"
 	"io"
 	"regexp"
 )
-
-// Lua API
-func LuaReadFilesFromZip(L *lua.LState) int {
-	zipPath := L.ToString(1)
-	if zipPath == "" {
-		L.Push(lua.LNil)
-		return 1
-	}
-
-	files, err := ReadFilesFromZip(zipPath)
-	if err != nil {
-		L.RaiseError("Failed to read files from zip: %s", err.Error())
-		return 0
-	}
-
-	resultTable := L.NewTable()
-	for name, content := range files {
-		resultTable.RawSetString(name, lua.LString(content))
-	}
-	L.Push(resultTable)
-	return 1
-}
-
-func LuaReadFileFromZip(L *lua.LState) int {
-	zipPath := L.ToString(1)
-	fileName := L.ToString(2)
-	useRegEx := true
-	if L.GetTop() > 2 {
-		if L.Get(3).Type() != lua.LTBool {
-			L.RaiseError("Expected boolean for useRegEx, got %s", L.Get(3).Type().String())
-			return 0
-		}
-		useRegEx = L.ToBool(3)
-	}
-
-	if zipPath == "" || fileName == "" {
-		L.Push(lua.LNil)
-		return 1
-	}
-
-	data, err := ReadFileFromZip(zipPath, fileName, useRegEx)
-	if err != nil {
-		L.RaiseError("Failed to read file from zip: %s", err.Error())
-		return 0
-	}
-
-	L.Push(lua.LString(data))
-	return 1
-}
 
 // ReadFilesFromZip reads all files from a zip archive and returns a map of filenames to their contents.
 func ReadFilesFromZip(zipPath string) (map[string][]byte, error) {
