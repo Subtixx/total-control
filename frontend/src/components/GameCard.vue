@@ -13,12 +13,12 @@ defineProps<Props>();
 <template>
     <div v-if="game" :key="game.id" class="items-center">
         <figure>
-            <div class="w-64 h-96 relative group">
+            <div class="relative group">
                 <router-link
                     :to="{ name: 'GameDetails', params: { id: game.id } }"
                     class="block" v-if="enableLink">
                     <img :src="game.capsule"
-                         alt="" class="rounded-xl object-cover max-w-64">
+                         alt="" class="rounded-xl object-cover">
                 </router-link>
                 <img :src="game.capsule"
                      alt="" class="rounded-xl object-cover max-w-64" v-else>
