@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import { useI18n } from "vue-i18n";
 
-import comeonGif from "@/assets/images/comeon.gif";
-
 const { t } = useI18n();
 </script>
 
@@ -13,7 +11,6 @@ const { t } = useI18n();
     <!-- Information -->
     <div class="content">
       <div class="comeon">
-        <img :src="comeonGif" alt="Gif" />
       </div>
       <ul class="info">
         <li class="info-item">

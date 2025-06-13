@@ -5,10 +5,7 @@ import App from "./App.vue";
 import i18n from "./i18n";
 import router from "./router";
 
-import "./style.scss";
-
-// Import "./assets/main.css";
-
+import "./style.css";
 const app = createApp(App);
 
 app.use(createPinia());
