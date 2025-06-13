@@ -6,7 +6,8 @@ import (
 )
 
 type GameVersion struct {
-	Version string `json:"version"` // The version of the game this mod is compatible with
+	Version    string `json:"version"`
+	ModVersion string `json:"mod_version"`
 }
 type Mod struct {
 	ID           string        `json:"id"`
@@ -26,25 +27,48 @@ type Mod struct {
 	GameID string `json:"game_id,omitempty"` // ID of the game this mod belongs to
 }
 
+func NewGameVersionsFromLuaTable(gameVersionTable *lua.LTable) ([]GameVersion, error) {
+	if gameVersionTable == nil {
+		return nil, nil // No game versions provided
+	}
+	if gameVersionTable.Type() != lua.LTTable {
+		return nil, errors.New("gameVersionTable is not a Lua table")
+	}
+
+	var gameVersions []GameVersion
+	gameVersionTable.ForEach(func(key lua.LValue, value lua.LValue) {
+		if key.Type() == lua.LTString && value.Type() == lua.LTString {
+			gameVersions = append(gameVersions, GameVersion{
+				Version:    key.String(),
+				ModVersion: value.String(),
+			})
+		}
+	})
+
+	return gameVersions, nil
+}
+
 func NewModFromLuaTable(modTable *lua.LTable) (*Mod, error) {
 	if modTable == nil {
 		return nil, nil // No mod data provided
 	}
+
 	if modTable.Type() != lua.LTTable {
 		return nil, errors.New("modTable is not a Lua table")
 	}
+
 	if modTable.RawGetString("id").Type() != lua.LTString {
 		return nil, errors.New("modTable is missing 'id' field or it is not a string")
 	}
+
 	if modTable.RawGetString("name").Type() != lua.LTString {
 		return nil, errors.New("modTable is missing 'name' field or it is not a string")
 	}
+
 	if modTable.RawGetString("version").Type() != lua.LTString {
 		return nil, errors.New("modTable is missing 'version' field or it is not a string")
 	}
-	if modTable.RawGetString("enabled").Type() != lua.LTBool {
-		return nil, errors.New("modTable is missing 'enabled' field or it is not a boolean")
-	}
+
 	if modTable.RawGetString("game_id").Type() != lua.LTString {
 		return nil, errors.New("modTable is missing 'game_id' field or it is not a string")
 	}
@@ -52,16 +76,17 @@ func NewModFromLuaTable(modTable *lua.LTable) (*Mod, error) {
 	var gameVersions []GameVersion
 	gameVersionsTable := modTable.RawGetString("game_versions")
 	if gameVersionsTable.Type() == lua.LTTable {
-		gameVersionsTable.(*lua.LTable).ForEach(func(_, value lua.LValue) {
-			if value.Type() == lua.LTTable {
-				versionTable := value.(*lua.LTable)
-				if versionTable.RawGetString("version").Type() == lua.LTString {
-					gameVersions = append(gameVersions, GameVersion{
-						Version: versionTable.RawGetString("version").String(),
-					})
-				}
-			}
-		})
+		// game_versions = {[gameVersion] = modVersion}
+		var err error
+		gameVersions, err = NewGameVersionsFromLuaTable(gameVersionsTable.(*lua.LTable))
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	enabled := false
+	if modTable.RawGetString("enabled").Type() == lua.LTBool {
+		enabled = bool(modTable.RawGetString("enabled").(lua.LBool))
 	}
 
 	mod := &Mod{
@@ -70,7 +95,7 @@ func NewModFromLuaTable(modTable *lua.LTable) (*Mod, error) {
 		Description:  modTable.RawGetString("description").String(),
 		Author:       modTable.RawGetString("author").String(),
 		Version:      modTable.RawGetString("version").String(),
-		Enabled:      bool(modTable.RawGetString("enabled").(lua.LBool)),
+		Enabled:      enabled,
 		Dependencies: nil,
 		DownloadURL:  "",
 		IconURL:      "",

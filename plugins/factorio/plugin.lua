@@ -23,20 +23,48 @@ function readModListFile(plugin)
     return mod_ids
 end
 
-plugin = {
+function loadModsFromApi()
+
+    -- Do Http requests to https://mods.factorio.com/api/mods
+    local response = http.get("https://mods.factorio.com/api/mods")
+    if response == nil then
+        log.error("Failed to fetch mods from Factorio API: " .. tostring(response))
+        return {}
+    end
+    if response.status_code ~= 200 then
+        log.error("Failed to fetch mods from Factorio API: " .. response.status_code)
+        return {}
+    end
+
+    local pagination = response.body.pagination
+    local results = response.body.results
+    print(serpent.block(response.body))
+    cache.set("factorio_mods", {
+        pagination = pagination,
+        results = results,
+    })
+    return response.body
+end
+
+function loadMods()
+    if cache.has("factorio_mods") then
+        -- If the cache exists, return it
+        local cached_mods = cache.get("factorio_mods")
+        if cached_mods and cached_mods.results then
+            print("Got " .. table_size(cached_mods.results) ..
+                    " mods from cache.")
+            return cached_mods
+        end
+    end
+    print("Cache not found, loading mods from API...")
+    return loadModsFromApi()
+end
+
+return {
     -- The first load of the plugins will be slower.
-    mods = nil,
+    mods = loadMods(),
     GetInstalledMods = function(self)
-        local response = http.get("https://api.ipify.org?format=json")
-        if response == nil then
-            log.error("Failed to fetch IP address: " .. tostring(response))
-            return {}
-        end
-        if response.status_code ~= 200 then
-            log.error("Failed to fetch IP address: " .. response.status_code)
-            return {}
-        end
-        print("IP Address: " .. response.body.ip)
+        print("GetInstalledMods called")
         if self.mods ~= nil then
             return self.mods
         end
@@ -108,6 +136,25 @@ plugin = {
         return "factorio"
     end,
     GetMods = function(self)
+        -- Convert self.mods.results to a table with fields id, name, version, enabled, game_id
+        if self.mods == nil or self.mods.results == nil then
+            return {}
+        end
+        local mods = {}
+        for k, mod in pairs(self.mods.results) do
+            mods[#mods + 1] = {
+                id = mod.name,
+                name = mod.name,
+                -- latest_release.version
+                version = mod.latest_release and mod.latest_release.version or "unknown",
+                game_id = self:GetGameID(),
+                author = mod.owner or "Unknown",
+                game_versions = {
+                    [mod.latest_release.info_json.factorio_version] = mod.latest_release.version,
+                }
+            }
+        end
+        return mods
     end,
     GetModByID = function(self, id)
     end,

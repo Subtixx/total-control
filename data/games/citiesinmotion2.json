@@ -1,1 +1,6 @@
-{"id":"citiesinmotion2","name":"Cities in Motion 2","steam_appid":225420,"header_image":"https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/225420/header.jpg?t=1726497191"}
+{
+  "id": "citiesinmotion2",
+  "name": "Cities in Motion 2",
+  "steam_appid": 225420,
+  "header_image": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/225420/header.jpg?t=1726497191"
+}

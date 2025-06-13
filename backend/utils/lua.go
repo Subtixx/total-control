@@ -32,6 +32,22 @@ func LuaArgsToString(args []lua.LValue) string {
 	return sb.String()
 }
 
+func FromLuaValue(L *lua.LState, value lua.LValue) interface{} {
+	switch v := value.(type) {
+	case lua.LString:
+		return v.String()
+	case lua.LNumber:
+		return float64(v)
+	case lua.LBool:
+		return bool(v)
+	case *lua.LTable:
+		return LuaTableToMap(L, v)
+	default:
+		L.RaiseError("Unsupported Lua value type: %s", v.Type().String())
+		return nil
+	}
+}
+
 func ToLuaValue(L *lua.LState, value interface{}) lua.LValue {
 	switch v := value.(type) {
 	case nil:
@@ -98,6 +114,15 @@ func MapToLuaTable(L *lua.LState, m map[string]interface{}) *lua.LTable {
 		}
 	}
 	return tbl
+}
+
+func LuaTableToMap(L *lua.LState, tbl *lua.LTable) map[string]interface{} {
+	result := make(map[string]interface{})
+	// Use FromLuaValue to convert Lua values to Go values
+	tbl.ForEach(func(key lua.LValue, value lua.LValue) {
+		result[key.String()] = FromLuaValue(L, value)
+	})
+	return result
 }
 
 func LuaJsonDecode(L *lua.LState) int {

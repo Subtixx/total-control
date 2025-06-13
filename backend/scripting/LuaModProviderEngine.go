@@ -3,24 +3,34 @@ package scripting
 import (
 	"TotalControl/backend/mods"
 	"fmt"
+	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 	lua "github.com/yuin/gopher-lua"
 )
 
+// Deprecated: Use LuaPlugin instead
 type LuaModProviderEngine struct {
 	LuaEngine
+	plugin *lua.LTable
 }
 
-func NewLuaModProviderEngine() *LuaModProviderEngine {
+// Deprecated: Use LuaPlugin instead
+func NewLuaModProviderEngine(luaEngineId uuid.UUID) (*LuaModProviderEngine, error) {
 	luaEngine := &LuaModProviderEngine{
 		LuaEngine: LuaEngine{
-			L: lua.NewState(),
+			L:    lua.NewState(),
+			uuid: luaEngineId,
 		},
 	}
-	luaEngine.Setup()
-	return luaEngine
+	err := luaEngine.Setup()
+	if err != nil {
+		log.Errorf("Failed to setup Lua engine: %v", err)
+		return nil, err
+	}
+	return luaEngine, nil
 }
 
+// Deprecated: Use LuaPlugin instead
 func (p *LuaModProviderEngine) GetPlugin() (*lua.LTable, error) {
 	if p.L == nil {
 		return nil, fmt.Errorf("lua state is not initialized")
@@ -40,6 +50,7 @@ func (p *LuaModProviderEngine) GetPlugin() (*lua.LTable, error) {
 	return plugin.(*lua.LTable), nil
 }
 
+// Deprecated: Use LuaPlugin instead
 func (p *LuaModProviderEngine) IsValid() bool {
 	plugin := p.L.GetGlobal("plugin")
 	if plugin.Type() != lua.LTTable {
@@ -61,6 +72,7 @@ func (p *LuaModProviderEngine) IsValid() bool {
 	return true
 }
 
+// Deprecated: Use LuaPlugin instead
 func (p *LuaModProviderEngine) GetInstalledMods() ([]mods.Mod, error) {
 	plugin := p.L.GetGlobal("plugin")
 	if plugin.Type() != lua.LTTable {
@@ -103,6 +115,7 @@ func (p *LuaModProviderEngine) GetInstalledMods() ([]mods.Mod, error) {
 	return foundMods, nil
 }
 
+// Deprecated: Use LuaPlugin instead
 func (p *LuaModProviderEngine) GetModByID(id string) (*mods.Mod, error) {
 	plugin := p.L.GetGlobal("plugin")
 	if plugin.Type() != lua.LTTable {
@@ -127,6 +140,7 @@ func (p *LuaModProviderEngine) GetModByID(id string) (*mods.Mod, error) {
 	return mod, nil
 }
 
+// Deprecated: Use LuaPlugin instead
 func (p *LuaModProviderEngine) GetGameModDirectory() (string, error) {
 	plugin, err := p.GetPlugin()
 	if err != nil {

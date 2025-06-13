@@ -4,13 +4,14 @@ import (
 	"TotalControl/backend/scripting"
 	"TotalControl/backend/utils"
 	"flag"
+	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 	lua "github.com/yuin/gopher-lua"
 	"os"
 )
 
 func testLuaEngine() {
-	luaEngine := scripting.NewLuaModProviderEngine()
+	luaEngine, _ := scripting.NewLuaModProviderEngine(uuid.New())
 	if err := luaEngine.LoadScript(`
 local mods = {
 	{id = "mod1", name = "Mod One", author = "Author A", version = "1.0", enabled = true, game_versions = { {version = "1.0"} }},
@@ -126,35 +127,67 @@ func main() {
 	log.SetReportCaller(true)
 	log.SetFormatter(&utils.CustomFormatter{})
 
-	// Test factorio lua
-	luaEngine := scripting.NewLuaModProviderEngine()
-	if err := luaEngine.LoadFile("plugins/factorio/plugin.lua"); err != nil {
-		log.Fatalf("Failed to load Lua file: %v", err)
+	/*
+		plugin, err := scripting.LoadLuaPlugin("plugins/factorio")
+		if err != nil {
+			log.Fatalf("Failed to load Lua plugin: %v", err)
+		}
+	*/
+	plugin, err := scripting.LoadLuaPluginFromZip("plugins/Factorio.tcplugin")
+	if err != nil {
+		log.Fatalf("Failed to load Lua plugin from zip: %v", err)
 	}
 
-	if !luaEngine.IsValid() {
-		log.Fatal("Lua mod provider engine is not valid")
-	}
-	log.Info("Lua mod provider engine is valid")
+	log.Infof("Loaded Lua plugin: ID=%s, Name=%s, Version=%s, EntryPoint=%s, PluginDir=%s",
+		plugin.Id, plugin.Name, plugin.Version, plugin.EntryPoint, plugin.PluginDir)
 
-	foundMods, err := luaEngine.GetInstalledMods()
+	modsAvailable, err := plugin.GetMods()
 	if err != nil {
 		log.Fatalf("Failed to get mods: %v", err)
 	}
-	if len(foundMods) == 0 {
-		log.Fatal("No mods found in Lua script")
+	if len(modsAvailable) == 0 {
+		log.Fatal("No mods found in Lua plugin")
 	}
-	for _, mod := range foundMods {
-		log.Infof("Found mod: ID=%s, Name=%s, Author=%s, Version=%s, Enabled=%t, GameVersions=%v",
-			mod.ID, mod.Name, mod.Author, mod.Version, mod.Enabled, mod.GameVersions)
+	for k, mod := range modsAvailable {
+		log.Debugf("Mod %s: %+v", k, mod)
 	}
 
-	modPath, err := luaEngine.GetGameModDirectory()
-	if err != nil {
-		log.Fatalf("Failed to get game mod directory: %v", err)
-		return
-	}
-	log.Infof("Game mod directory: %s", modPath)
+	plugin.Shutdown()
+
+	/*
+		// Test factorio lua
+		luaEngine, err := scripting.NewLuaModProviderEngine(uuid.New())
+		if err != nil {
+			log.Fatalf("Failed to create Lua mod provider engine: %v", err)
+		}
+		if err := luaEngine.LoadFile("plugins/factorio/plugin.lua"); err != nil {
+			log.Fatalf("Failed to load Lua file: %v", err)
+		}
+
+		if !luaEngine.IsValid() {
+			log.Fatal("Lua mod provider engine is not valid")
+		}
+		log.Info("Lua mod provider engine is valid")
+
+		foundMods, err := luaEngine.GetInstalledMods()
+		if err != nil {
+			log.Fatalf("Failed to get mods: %v", err)
+		}
+		if len(foundMods) == 0 {
+			log.Fatal("No mods found in Lua script")
+		}
+		for _, mod := range foundMods {
+			log.Infof("Found mod: ID=%s, Name=%s, Author=%s, Version=%s, Enabled=%t, GameVersions=%v",
+				mod.ID, mod.Name, mod.Author, mod.Version, mod.Enabled, mod.GameVersions)
+		}
+
+		modPath, err := luaEngine.GetGameModDirectory()
+		if err != nil {
+			log.Fatalf("Failed to get game mod directory: %v", err)
+			return
+		}
+		log.Infof("Game mod directory: %s", modPath)
+	*/
 }
 
 /*

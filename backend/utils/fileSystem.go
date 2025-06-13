@@ -64,3 +64,12 @@ func GetFilesByWildcards(dir string, patterns []string) ([]string, error) {
 func GetFilesByWildcard(dir string, pattern string) ([]string, error) {
 	return GetFilesByWildcards(dir, []string{pattern})
 }
+
+func CreateDirectoryIfNotExists(dir string) error {
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		if err := os.MkdirAll(dir, os.ModePerm); err != nil {
+			return err
+		}
+	}
+	return nil
+}
