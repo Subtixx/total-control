@@ -100,3 +100,4 @@ fabric.properties
 dist/
 npm-debug.log
 yarn-error.log
+/build/bin/*-linux-amd64
