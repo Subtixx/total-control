@@ -14,6 +14,8 @@ game mods with ease on Windows, Linux and macOS. It has been built to make moddi
 No more messing around with a certain wine application that is not available on Linux or macOS.
 No ads, no tracking, no payments, no subscriptions, just a simple and effective mod manager for your games.
 
+![![Total Control Screenshot](https://raw.githubusercontent.com/Subtixx/total-control/main/.github/preview-ui.png)](https://raw.githubusercontent.com/Subtixx/total-control/main/.github/preview-ui.png)
+
 ## Features
 
 - 🚀 Cross-platform: Works on Windows, Linux and macOS
