@@ -2,6 +2,7 @@ package utils
 
 import (
 	"os"
+	"path/filepath"
 	"runtime"
 )
 
@@ -25,6 +26,10 @@ func GetOperatingSystem() string {
 	}
 }
 
+// GetCommonUserDataPath returns the common user data path based on the operating system.
+// Windows: %LOCALAPPDATA%
+// macOS: ~/Library/Application Support
+// Linux: ~/.local/share
 func GetCommonUserDataPath() string {
 	if GetOperatingSystem() == WindowsOS {
 		return os.Getenv("LOCALAPPDATA")
@@ -35,6 +40,24 @@ func GetCommonUserDataPath() string {
 	}
 
 	panic("Unsupported OS: " + GetOperatingSystem())
+}
+
+func GetAppDataPath() string {
+	// Get the user's home directory
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		panic(err) // Handle error appropriately in production code
+	}
+
+	// Construct the app data path
+	appDataPath := filepath.Join(homeDir, ".totalcontrol")
+
+	// Create the directory if it doesn't exist
+	if err := CreateDirectoryIfNotExists(appDataPath); err != nil {
+		panic(err) // Handle error appropriately in production code
+	}
+
+	return appDataPath
 }
 
 func IsWindows() bool {

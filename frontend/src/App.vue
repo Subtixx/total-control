@@ -16,4 +16,3 @@ import NavBar from "@components/NavBar.vue";
     </div>
 </template>
 
-<style lang="scss"></style>

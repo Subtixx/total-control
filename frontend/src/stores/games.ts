@@ -1,4 +1,7 @@
 import {defineStore} from 'pinia';
+import type {Mod} from "@stores/mods.ts";
+import {GetInstalledGames} from "@wails/go/main/App";
+import {games} from "@wails/go/models.ts";
 
 export class Game {
     id: number;
@@ -10,6 +13,7 @@ export class Game {
         steam?: string;
     }
     gamePath?: string;
+    installedMods: Mod[] = [];
 
     constructor(props: {
         id?: number;
@@ -58,7 +62,7 @@ export class Game {
     }
 }
 
-const games: Game[] = [
+/*const games: Game[] = [
     new Game({
         id: 1,
         slug: 'dying-light',
@@ -115,7 +119,7 @@ const games: Game[] = [
         externalIds: {grid_db: '2048', steam: '211820'},
         gamePath: '/mnt/games/starbound'
     }),
-];
+];*/
 
 export const useGamesStore = defineStore('games', {
     state: () => ({
@@ -182,17 +186,13 @@ export const useGamesStore = defineStore('games', {
 
             this.loading = false;
         },
-        async fetchInstalledGames(): Promise<Game[]> {
+        async fetchInstalledGames(): Promise<games.Game[]> {
             this.loading = true;
             this.error = null;
 
             // For now, we simulate fetching installed games with a timeout
             try {
-                return await new Promise<Game[]>(resolve => {
-                    setTimeout(() => {
-                        resolve(games.filter(game => game.id % 2 === 0)); // Simulate installed games
-                    }, 1000);
-                });
+                return await GetInstalledGames();
             } catch (error) {
                 this.error = error instanceof Error ? error.message : 'An error occurred while fetching installed games.';
                 return [];

@@ -12,6 +12,9 @@
             "@/*": [
                 "src/*"
             ],
+            "@wails/*": [
+                "wailsjs/*"
+            ],
             "@assets/*": [
                 "src/assets/*"
             ],

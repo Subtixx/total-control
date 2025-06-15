@@ -17,8 +17,8 @@ import (
 
 type LuaEngine struct {
 	uuid  uuid.UUID
-	L     *lua.LState
-	cache *utils.Cache
+	L     *lua.LState `json:"-"`
+	Cache *utils.Cache
 }
 
 func NewLuaEngine(luaEngineId uuid.UUID) (*LuaEngine, error) {
@@ -43,49 +43,80 @@ func GetLuaEngine(L *lua.LState) *LuaEngine {
 	return nil
 }
 
+func (l *LuaEngine) Logger() *log.Entry {
+	return log.WithFields(log.Fields{
+		"lua":    true,
+		"plugin": l.uuid.String(),
+	})
+}
+
 func (l *LuaEngine) Setup() error {
+	if err := l.setupContext(); err != nil {
+		return err
+	}
+	if err := l.setupCache(); err != nil {
+		return err
+	}
+	l.L.OpenLibs() // This could be really bad if we allow all libraries!
+	l.registerGlobals()
+	if err := LoadLibs(l.L); err != nil {
+		l.Logger().Errorf("Failed to load Lua libraries: %v", err)
+		l.L.Close()
+		return err
+	}
+	l.registerObjects()
+	return nil
+}
+
+// setupContext sets the LuaEngine context
+func (l *LuaEngine) setupContext() error {
 	if l.uuid == uuid.Nil {
 		return errors.New("LuaEngine UUID cannot be nil")
 	}
 	ctx := context.WithValue(context.Background(), "luaengine", l)
 	l.L.SetContext(ctx)
+	return nil
+}
 
+// setupCache initializes the cache for the LuaEngine
+func (l *LuaEngine) setupCache() error {
 	err := utils.CreateDirectoryIfNotExists("plugins/.cache")
 	if err != nil {
 		log.Errorf("Failed to create cache directory: %v", err)
 	}
-	l.cache = utils.NewCache(fmt.Sprintf("plugins/.cache/%s.json", l.uuid.String()))
-
-	l.L.OpenLibs() // This could be really bad if we allow all libraries!
-	l.L.SetGlobal("print", l.L.NewFunction(luaPrint))
-	l.L.SetGlobal("error_handler", l.L.NewFunction(luaErrorHandler))
-	l.L.SetGlobal("table_size", l.L.NewFunction(luaTableSize))
-
-	err = LoadLibs(l.L)
-	if err != nil {
-		log.Errorf("Failed to load Lua libraries: %v", err)
-		l.L.Close()
-		return err
-	}
-
-	luaRegisterLogObject(l.L)
-	luaRegisterJsonObject(l.L)
-	luaExtendIoTable(l.L)
-	luaExtendOsTable(l.L)
-	luaRegisterHttpObject(l.L)
-	luaRegisterCacheObject(l.L)
-
+	l.Cache = utils.NewCache(fmt.Sprintf("plugins/.cache/%s.json", l.uuid.String()), l.uuid)
 	return nil
 }
 
-func (l *LuaEngine) Shutdown() {
-	if l.cache != nil {
-		err := l.cache.Save(fmt.Sprintf("plugins/.cache/%s.json", l.uuid.String()))
-		if err != nil {
-			log.Fatalf("Failed to save cache: %v", err)
-		}
+// registerGlobals registers global Lua functions
+func (l *LuaEngine) registerGlobals() {
+	l.L.SetGlobal("print", l.L.NewFunction(luaPrint))
+	l.L.SetGlobal("error_handler", l.L.NewFunction(luaErrorHandler))
+	l.L.SetGlobal("table_size", l.L.NewFunction(luaTableSize))
+}
+
+// registerObjects registers custom objects and extensions
+func (l *LuaEngine) registerObjects() {
+	LuaRegisterLogObject(l.L)
+	LuaRegisterJsonObject(l.L)
+	LuaRegisterRegExObject(l.L)
+	LuaRegisterHttpObject(l.L)
+	LuaRegisterCacheObject(l.L)
+	LuaRegisterZipObject(l.L)
+
+	LuaExtendTableObject(l.L)
+	LuaExtendIoTable(l.L)
+	LuaExtendOsTable(l.L)
+}
+
+func (l *LuaEngine) Shutdown() error {
+	var err error = nil
+	if l.Cache != nil {
+		err = l.Cache.Save(fmt.Sprintf("plugins/.cache/%s.json", l.uuid.String()))
 	}
 	l.L.Close()
+	l.Logger().Debugf("LuaEngine %s has been shut down", l.uuid.String())
+	return err
 }
 
 func (l *LuaEngine) CheckLuaError(err error) {
@@ -126,7 +157,7 @@ func (l *LuaEngine) DoStringWithTimeout(script string, timeout time.Duration) er
 	select {
 	case <-ctx.Done():
 		l.L.Close() // forcibly close the Lua state
-		return errors.New("Lua script execution timed out")
+		return errors.New("lua script execution timed out")
 	case err := <-errCh:
 		return err
 	}

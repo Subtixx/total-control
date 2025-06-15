@@ -1,6 +1,8 @@
 {
   "id": "4edd31cd-6193-43b0-818e-fb2bac791dde",
   "name": "Factorio",
+  "description": "Enables managing Factorio mods and saves.",
+  "author": "IT-Hock",
   "version": "1.0.0",
   "entry": "plugin.lua"
 }

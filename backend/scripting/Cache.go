@@ -6,6 +6,17 @@ import (
 	lua "github.com/yuin/gopher-lua"
 )
 
+func LuaRegisterCacheObject(L *lua.LState) {
+	cache := L.NewTable()
+	L.SetGlobal("cache", cache)
+
+	L.SetField(cache, "has", L.NewFunction(luaCacheHasKey))
+	L.SetField(cache, "get", L.NewFunction(luaCacheGet))
+	L.SetField(cache, "set", L.NewFunction(luaCacheSet))
+	L.SetField(cache, "delete", L.NewFunction(luaCacheDelete))
+	L.SetField(cache, "clear", L.NewFunction(luaCacheClear))
+}
+
 func luaCacheHasKey(L *lua.LState) int {
 	key := L.ToString(1)
 	if key == "" {
@@ -20,7 +31,7 @@ func luaCacheHasKey(L *lua.LState) int {
 		return 0
 	}
 
-	exists, err := engine.cache.HasKey(key)
+	exists, err := engine.Cache.HasKey(key)
 	if err != nil {
 		L.RaiseError("cache.has_key: %v", err)
 		return 0
@@ -44,7 +55,7 @@ func luaCacheGet(L *lua.LState) int {
 		L.RaiseError("cache.get: LuaEngine not found in context")
 		return 0
 	}
-	value, err := engine.cache.Get(key)
+	value, err := engine.Cache.Get(key)
 	if err != nil {
 		L.RaiseError("cache.get: %v", err)
 		return 0
@@ -100,7 +111,7 @@ func luaCacheSet(L *lua.LState) int {
 		}
 		expiration = exp
 	}
-	err := engine.cache.Set(key, goValue, expiration)
+	err := engine.Cache.Set(key, goValue, expiration)
 	if err != nil {
 		L.RaiseError("cache.set: %v", err)
 		return 0
@@ -123,7 +134,7 @@ func luaCacheDelete(L *lua.LState) int {
 		return 0
 	}
 
-	err := engine.cache.Delete(key)
+	err := engine.Cache.Delete(key)
 	if err != nil {
 		L.RaiseError("cache.delete: %v", err)
 		return 0
@@ -141,7 +152,7 @@ func luaCacheClear(L *lua.LState) int {
 		return 0
 	}
 
-	err := engine.cache.Clear()
+	err := engine.Cache.Clear()
 	if err != nil {
 		L.RaiseError("cache.clear: %v", err)
 		return 0
@@ -149,15 +160,4 @@ func luaCacheClear(L *lua.LState) int {
 
 	L.Push(lua.LTrue)
 	return 1
-}
-
-func luaRegisterCacheObject(L *lua.LState) {
-	cache := L.NewTable()
-	L.SetGlobal("cache", cache)
-
-	L.SetField(cache, "has", L.NewFunction(luaCacheHasKey))
-	L.SetField(cache, "get", L.NewFunction(luaCacheGet))
-	L.SetField(cache, "set", L.NewFunction(luaCacheSet))
-	L.SetField(cache, "delete", L.NewFunction(luaCacheDelete))
-	L.SetField(cache, "clear", L.NewFunction(luaCacheClear))
 }

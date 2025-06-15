@@ -8,11 +8,10 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"strconv"
 )
 
-func GetAppDetails(appID int) (*AppDetailsResponse, error) {
-	resp, err := http.Get("https://store.steampowered.com/api/appdetails?appids=" + strconv.Itoa(appID))
+func GetAppDetails(appID string) (*AppDetailsResponse, error) {
+	resp, err := http.Get("https://store.steampowered.com/api/appdetails?appids=" + appID)
 	if err != nil {
 		return nil, errors.New("failed to make request to Steam API")
 	}
@@ -37,7 +36,7 @@ func GetAppDetails(appID int) (*AppDetailsResponse, error) {
 		return nil, errors.New("empty response from Steam API")
 	}
 	// Extract the inner data object
-	data, ok := rawResponse[strconv.Itoa(appID)]
+	data, ok := rawResponse[appID]
 	if !ok {
 		return nil, errors.New("app ID not found in response from Steam API")
 	}

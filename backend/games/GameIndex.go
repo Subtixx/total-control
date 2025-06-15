@@ -27,42 +27,43 @@ func NewGameIndex(filePath string) (*GameIndex, error) {
 	return &index, nil
 }
 
-func (g *GameIndex) GetGameByID(id string) (*GameIndexEntry, error) {
+// Helper function to find a game entry by a predicate
+func (g *GameIndex) findEntry(predicate func(entry GameIndexEntry) bool) (*GameIndexEntry, error) {
 	for _, entry := range g.Entries {
-		if entry.ID == id {
+		if predicate(entry) {
 			return &entry, nil
 		}
 	}
-	return nil, errors.New("game not found with ID: " + id)
+	return nil, errors.New("game not found")
+}
+
+func (g *GameIndex) GetGameByID(id string) (*GameIndexEntry, error) {
+	return g.findEntry(func(entry GameIndexEntry) bool {
+		return entry.ID == id
+	})
 }
 
 func (g *GameIndex) GetGameEntryByName(name string) (*GameIndexEntry, error) {
-	for _, entry := range g.Entries {
-		if entry.Name == name {
-			return &entry, nil
-		}
-	}
-	return nil, errors.New("game not found with name: " + name)
+	return g.findEntry(func(entry GameIndexEntry) bool {
+		return entry.Name == name
+	})
 }
 
 func (g *GameIndex) GetGameEntryBySteamAppID(steamAppID int) (*GameIndexEntry, error) {
-	for _, entry := range g.Entries {
-		if entry.SteamAppID == steamAppID {
-			return &entry, nil
-		}
-	}
-	return nil, errors.New("game not found with Steam App ID: " + strconv.Itoa(steamAppID))
+	return g.findEntry(func(entry GameIndexEntry) bool {
+		return entry.SteamAppID == steamAppID
+	})
 }
 
 func (g *GameIndex) GetGameEntryByExecutablePath(executablePath string) (*GameIndexEntry, error) {
-	for _, entry := range g.Entries {
+	return g.findEntry(func(entry GameIndexEntry) bool {
 		for _, executable := range entry.Executables {
 			if strings.ToLower(executable.Path) == strings.ToLower(executablePath) {
-				return &entry, nil
+				return true
 			}
 		}
-	}
-	return nil, errors.New("game not found with executable path: " + executablePath)
+		return false
+	})
 }
 
 func (g *GameIndex) DetectGameFromSteamAppID(steamAppID int) (*Game, error) {

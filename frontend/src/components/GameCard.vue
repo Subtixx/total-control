@@ -11,7 +11,7 @@ defineProps<Props>();
 </script>
 
 <template>
-    <div v-if="game" :key="game.id" class="items-center">
+    <div v-if="game" :key="game.id" class="items-center w-full">
         <figure>
             <div class="relative group">
                 <router-link
@@ -31,12 +31,7 @@ defineProps<Props>();
             </div>
         </figure>
     </div>
-    <!-- Skeleton Loader -->
-    <div v-else class="items-center animate-pulse rounded-xl w-64 h-96">
-        <div class="skeleton rounded-xl w-64 h-96"></div>
+    <div v-else class="items-center animate-pulse rounded-xl">
+        <div class="skeleton rounded-xl w-full aspect-[2/3]"></div>
     </div>
 </template>
-
-<style scoped lang="scss">
-
-</style>

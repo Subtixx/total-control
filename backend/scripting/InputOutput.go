@@ -2,7 +2,6 @@ package scripting
 
 import (
 	"TotalControl/backend/utils"
-	log "github.com/sirupsen/logrus"
 	lua "github.com/yuin/gopher-lua"
 	"os"
 	"path/filepath"
@@ -68,65 +67,10 @@ func LuaGetFileContent(L *lua.LState) int {
 	L.Push(lua.LString(content))
 	return 1
 }
-func LuaReadFilesFromZip(L *lua.LState) int {
-	zipPath := L.ToString(1)
-	if zipPath == "" {
-		L.Push(lua.LNil)
-		return 1
-	}
 
-	files, err := utils.ReadFilesFromZip(zipPath)
-	if err != nil {
-		L.RaiseError("Failed to read files from zip: %s", err.Error())
-		return 0
-	}
-
-	resultTable := L.NewTable()
-	for name, content := range files {
-		resultTable.RawSetString(name, lua.LString(content))
-	}
-	L.Push(resultTable)
-	return 1
-}
-
-func LuaReadFileFromZip(L *lua.LState) int {
-	zipPath := L.ToString(1)
-	fileName := L.ToString(2)
-	useRegEx := true
-	if L.GetTop() > 2 {
-		if L.Get(3).Type() != lua.LTBool {
-			L.RaiseError("Expected boolean for useRegEx, got %s", L.Get(3).Type().String())
-			return 0
-		}
-		useRegEx = L.ToBool(3)
-	}
-
-	if zipPath == "" || fileName == "" {
-		L.Push(lua.LNil)
-		return 1
-	}
-
-	data, err := utils.ReadFileFromZip(zipPath, fileName, useRegEx)
-	if err != nil {
-		L.RaiseError("Failed to read file from zip: %s", err.Error())
-		return 0
-	}
-
-	L.Push(lua.LString(data))
-	return 1
-}
-
-func luaExtendIoTable(l *lua.LState) {
-	ioTable := l.GetGlobal("io")
-	tbl, ok := ioTable.(*lua.LTable)
-	if !ok {
-		log.Warnf("io table not found, creating a new one")
-		tbl = l.NewTable()
-		l.SetGlobal("io", tbl)
-	}
-	l.SetField(tbl, "readFileFromZip", l.NewFunction(LuaReadFileFromZip))
-	l.SetField(tbl, "readFilesFromZip", l.NewFunction(LuaReadFilesFromZip))
-	l.SetField(tbl, "getFilesInDirectory", l.NewFunction(LuaGetFilesInDirectory))
-	l.SetField(tbl, "getFileName", l.NewFunction(LuaGetFileName))
-	l.SetField(tbl, "getFileContent", l.NewFunction(LuaGetFileContent))
+func LuaExtendIoTable(l *lua.LState) {
+	table := GetOrCreateTable(l, "io")
+	l.SetField(table, "getFilesInDirectory", l.NewFunction(LuaGetFilesInDirectory))
+	l.SetField(table, "getFileName", l.NewFunction(LuaGetFileName))
+	l.SetField(table, "getFileContent", l.NewFunction(LuaGetFileContent))
 }

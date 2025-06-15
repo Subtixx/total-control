@@ -1,20 +1,24 @@
 package main
 
 import (
+	"TotalControl/backend/scripting"
+	"TotalControl/backend/utils"
 	"embed"
-	"github.com/wailsapp/wails/v2/pkg/menu"
-	"github.com/wailsapp/wails/v2/pkg/menu/keys"
-	"log"
-	"runtime"
-
+	"flag"
+	log "github.com/sirupsen/logrus"
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/logger"
+	"github.com/wailsapp/wails/v2/pkg/menu"
+	"github.com/wailsapp/wails/v2/pkg/menu/keys"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
 	"github.com/wailsapp/wails/v2/pkg/options/linux"
 	"github.com/wailsapp/wails/v2/pkg/options/mac"
 	"github.com/wailsapp/wails/v2/pkg/options/windows"
 	rt "github.com/wailsapp/wails/v2/pkg/runtime"
+	"os"
+	"path/filepath"
+	"runtime"
 )
 
 //go:embed frontend/dist
@@ -23,30 +27,83 @@ var assets embed.FS
 //go:embed build/appicon.png
 var icon []byte
 
+var pluginManager *scripting.PluginManager
+
+func GetPluginManager() *scripting.PluginManager {
+	return pluginManager
+}
+
+func ParseWailsLogLevel(level string) logger.LogLevel {
+	switch level {
+	case "debug":
+		return logger.DEBUG
+	case "info":
+		return logger.INFO
+	case "warn":
+		return logger.WARNING
+	case "error":
+		return logger.ERROR
+	default:
+		log.Warnf("Invalid Wails log level '%s', defaulting to 'info'", level)
+		return logger.INFO
+	}
+}
+
 func main() {
+	logPath := flag.String("log-path", "", "Path to log file (default: stdout)")
+	logLevel := flag.String("log-level", "debug", "Log level (debug, info, warn, error, fatal, panic)")
+	appDataPath := flag.String("app-data-path", "./", "Path to application data directory (default: system default path)")
+	wailsLogLevelStr := flag.String("wails-log-level", "info", "Wails log level (debug, info, warn, error, fatal, panic)")
+	flag.Parse()
+
+	if *logPath != "" {
+		f, err := os.OpenFile(*logPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+		if err != nil {
+			log.Fatalf("Failed to open log file: %v", err)
+		}
+		log.SetOutput(f)
+	}
+
+	level, err := log.ParseLevel(*logLevel)
+	if err != nil {
+		log.Warnf("Invalid log level '%s', defaulting to 'info'", *logLevel)
+		level = log.InfoLevel
+	}
+	log.SetLevel(level)
+	log.SetReportCaller(true)
+	log.SetFormatter(&utils.CustomFormatter{})
+
+	// Initialize the plugin manager
+	pluginDir := filepath.Join(utils.GetAppDataPath(), "plugins")
+	if *appDataPath != "" {
+		pluginDir = filepath.Join(*appDataPath, "plugins")
+	}
+	if _, err := os.Stat(pluginDir); os.IsNotExist(err) {
+		if err := os.MkdirAll(pluginDir, 0755); err != nil {
+			log.Fatalf("Failed to create plugin directory: %v", err)
+		}
+	}
+	pluginManager, err = scripting.NewPluginManager(pluginDir)
+	if err != nil {
+		log.Fatalf("Failed to initialize plugin manager: %v", err)
+	}
+
 	// Create an instance of the app structure
 	app := NewApp()
+	AppMenu := createMenus(app)
 
-	AppMenu := menu.NewMenu()
-	if runtime.GOOS == "darwin" {
-		AppMenu.Append(menu.AppMenu()) // On macOS platform, this must be done right after `NewMenu()`
-	}
-	FileMenu := AppMenu.AddSubmenu("File")
-	FileMenu.AddText("&Open", keys.CmdOrCtrl("o"), func(_ *menu.CallbackData) {
-		// do something
-	})
-	FileMenu.AddSeparator()
-	FileMenu.AddText("Quit", keys.CmdOrCtrl("q"), func(_ *menu.CallbackData) {
-		// `rt` is an alias of "github.com/wailsapp/wails/v2/pkg/runtime" to prevent collision with standard package
-		rt.Quit(app.ctx)
-	})
-
-	if runtime.GOOS == "darwin" {
-		AppMenu.Append(menu.EditMenu()) // On macOS platform, EditMenu should be appended to enable Cmd+C, Cmd+V, Cmd+Z... shortcuts
+	var wailsLogLevel logger.LogLevel
+	if *wailsLogLevelStr != "" {
+		logLevel := ParseWailsLogLevel(*wailsLogLevelStr)
+		log.Infof("Setting Wails log level to %s", logLevel)
+		wailsLogLevel = logLevel
+	} else {
+		log.Warn("No Wails log level specified, defaulting to 'info'")
+		wailsLogLevel = logger.INFO
 	}
 
 	// Create application with options
-	err := wails.Run(&options.App{
+	err = wails.Run(&options.App{
 		Title:     "TotalControl",
 		Width:     900,
 		Height:    600,
@@ -60,13 +117,17 @@ func main() {
 		StartHidden:       false,
 		HideWindowOnClose: false,
 		//BackgroundColour:  &options.RGBA{R: 255, G: 255, B: 255, A: 0},
-		Menu:             AppMenu,
-		Logger:           nil,
-		LogLevel:         logger.DEBUG,
-		OnStartup:        app.startup,
-		OnDomReady:       app.domReady,
-		OnBeforeClose:    app.beforeClose,
-		OnShutdown:       app.shutdown,
+		Menu:          AppMenu,
+		Logger:        nil,
+		LogLevel:      wailsLogLevel,
+		OnStartup:     app.startup,
+		OnDomReady:    app.domReady,
+		OnBeforeClose: app.beforeClose,
+		OnShutdown:    app.shutdown,
+		SingleInstanceLock: &options.SingleInstanceLock{
+			UniqueId:               "de95813c-cf49-446c-b34e-92fb592503e5",
+			OnSecondInstanceLaunch: app.onSecondInstanceLaunch,
+		},
 		WindowStartState: options.Normal,
 		AssetServer: &assetserver.Options{
 			Assets:     assets,
@@ -76,8 +137,9 @@ func main() {
 		Bind: []interface{}{
 			app,
 		},
+		EnumBind:       []interface{}{},
+		ErrorFormatter: func(err error) any { return err.Error() },
 		// Windows platform specific options
-		// Windows平台特定选项
 		Windows: &windows.Options{
 			WebviewIsTransparent:              true,
 			WindowIsTranslucent:               false,
@@ -88,7 +150,6 @@ func main() {
 			Theme:                             windows.SystemDefault,
 		},
 		// Mac platform specific options
-		// Mac平台特定选项
 		Mac: &mac.Options{
 			TitleBar: &mac.TitleBar{
 				TitlebarAppearsTransparent: true,
@@ -101,18 +162,32 @@ func main() {
 			Appearance:           mac.NSAppearanceNameDarkAqua,
 			WebviewIsTransparent: true,
 			WindowIsTranslucent:  true,
-			About: &mac.AboutInfo{
-				Title:   "Wails Template Vue",
-				Message: "A Wails template based on Vue and Vue-Router",
-				Icon:    icon,
-			},
 		},
 		Linux: &linux.Options{
 			Icon: icon,
+		},
+		Debug: options.Debug{
+			OpenInspectorOnStartup: true,
 		},
 	})
 
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func createMenus(app *App) *menu.Menu {
+	AppMenu := menu.NewMenu()
+	if runtime.GOOS == "darwin" {
+		AppMenu.Append(menu.AppMenu()) // On macOS platform, this must be done right after `NewMenu()`
+	}
+	if runtime.GOOS == "darwin" {
+		AppMenu.Append(menu.EditMenu())
+	}
+
+	HelpMenu := AppMenu.AddSubmenu("Help")
+	HelpMenu.AddText("About", keys.CmdOrCtrl("a"), func(_ *menu.CallbackData) {
+		rt.BrowserOpenURL(app.ctx, "https://github.com/subtixx/total-control")
+	})
+	return AppMenu
 }

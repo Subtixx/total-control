@@ -1,7 +1,12 @@
 package main
 
 import (
+	"TotalControl/backend/games"
+	"TotalControl/backend/scripting"
 	"context"
+	"github.com/wailsapp/wails/v2/pkg/options"
+	"github.com/wailsapp/wails/v2/pkg/runtime"
+	"strings"
 )
 
 // App struct
@@ -18,6 +23,16 @@ func NewApp() *App {
 func (a *App) startup(ctx context.Context) {
 	// Perform your setup here
 	a.ctx = ctx
+}
+
+func (a *App) onSecondInstanceLaunch(secondInstanceData options.SecondInstanceData) {
+	secondInstanceArgs := secondInstanceData.Args
+
+	println("user opened second instance", strings.Join(secondInstanceData.Args, ","))
+	println("user opened second from", secondInstanceData.WorkingDirectory)
+	runtime.WindowUnminimise(a.ctx)
+	runtime.Show(a.ctx)
+	go runtime.EventsEmit(a.ctx, "launchArgs", secondInstanceArgs)
 }
 
 // domReady is called after the front-end dom has been loaded
@@ -37,4 +52,16 @@ func (a *App) beforeClose(ctx context.Context) (prevent bool) {
 func (a *App) shutdown(ctx context.Context) {
 	// Perform your teardown here
 	// 在此处做一些资源释放的操作
+}
+
+func (a *App) GetInstalledPlugins() map[string]*scripting.LuaPlugin {
+	pluginManager := GetPluginManager()
+	if pluginManager == nil {
+		return nil
+	}
+	return pluginManager.GetLoadedPlugins()
+}
+
+func (a *App) GetInstalledGames() []*games.Game {
+	return make([]*games.Game, 0)
 }

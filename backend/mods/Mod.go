@@ -9,6 +9,7 @@ type GameVersion struct {
 	Version    string `json:"version"`
 	ModVersion string `json:"mod_version"`
 }
+
 type Mod struct {
 	ID           string        `json:"id"`
 	Name         string        `json:"name"`

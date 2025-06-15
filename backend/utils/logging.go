@@ -8,41 +8,125 @@ import (
 
 type CustomFormatter struct {
 	log.Formatter
+
+	showCaller bool
+}
+
+func FormatPrefixString(prefix string) string {
+	if len(prefix) > 5 {
+		prefix = prefix[:5]
+	}
+	return fmt.Sprintf("[%-5s]", prefix)
+}
+
+func LoggingLevelString(level log.Level) string {
+	switch level {
+	case log.TraceLevel:
+		return "TRACE"
+	case log.DebugLevel:
+		return "DEBUG"
+	case log.InfoLevel:
+		return "INFO"
+	case log.WarnLevel:
+		return "WARN"
+	case log.ErrorLevel:
+		return "ERROR"
+	case log.FatalLevel:
+		return "FATAL"
+	case log.PanicLevel:
+		return "PANIC"
+	default:
+		panic(fmt.Sprintf("Unknown log level: %v", level))
+	}
+}
+
+func (f *CustomFormatter) FormatCaller(entry *log.Entry) string {
+	if !entry.HasCaller() || !f.showCaller {
+		return ""
+	}
+	file := entry.Caller.File
+	line := entry.Caller.Line
+	funcName := entry.Caller.Function
+	if file != "" {
+		return fmt.Sprintf("%s:%d %s", file, line, funcName)
+	}
+	return fmt.Sprintf("%s:%d", funcName, line)
+}
+
+func (f *CustomFormatter) FormatLua(entry *log.Entry) string {
+	if entry.Data["lua"] == nil {
+		return ""
+	}
+
+	source, hasSource := entry.Data["source"].(string)
+	funcName, hasFunc := entry.Data["function"].(string)
+	line, hasLine := entry.Data["line"].(int)
+
+	formatted := ""
+	switch {
+	case hasSource && hasFunc && hasLine:
+		formatted = fmt.Sprintf("[%s:%d %s]", source, line, funcName)
+	case hasSource && hasFunc:
+		formatted = fmt.Sprintf("[%s %s]", source, funcName)
+	case hasSource && hasLine:
+		formatted = fmt.Sprintf("[%s:%d]", source, line)
+	case hasFunc && hasLine:
+		formatted = fmt.Sprintf("[%s:%d]", funcName, line)
+	case hasSource:
+		formatted = fmt.Sprintf("[%s]", source)
+	case hasFunc:
+		formatted = fmt.Sprintf("[%s]", funcName)
+	case hasLine:
+		formatted = fmt.Sprintf("[%d]", line)
+	}
+
+	if formatted == "" {
+		if plugin, ok := entry.Data["plugin"].(string); ok {
+			formatted = formatted + FormatPrefixString(plugin)
+		} else {
+			formatted = FormatPrefixString("LUA")
+		}
+	}
+
+	return formatted
+}
+
+func (f *CustomFormatter) FormatPrefix(entry *log.Entry) string {
+	if entry.Data["prefix"] == nil {
+		return ""
+	}
+
+	prefix, ok := entry.Data["prefix"].(string)
+	if !ok {
+		log.Warn("Log entry prefix is not a string, skipping")
+		return ""
+	}
+
+	return FormatPrefixString(prefix)
 }
 
 func (f *CustomFormatter) Format(entry *log.Entry) ([]byte, error) {
 	prefixes := []string{
 		fmt.Sprintf("[%s]", entry.Time.Format("15:04:05")),
-		fmt.Sprintf("[%s]", strings.ToUpper(entry.Level.String())),
+		FormatPrefixString(LoggingLevelString(entry.Level)),
 	}
 
-	if entry.Data["lua"] != nil {
-		source, hasSource := entry.Data["source"].(string)
-		funcName, hasFunc := entry.Data["function"].(string)
-		line, hasLine := entry.Data["line"].(int)
-		if hasSource && hasFunc && hasLine {
-			prefixes = append(prefixes, fmt.Sprintf("[%s:%d %s]", source, line, funcName))
-		} else if hasSource && hasFunc {
-			prefixes = append(prefixes, fmt.Sprintf("[%s %s]", source, funcName))
-		} else if hasSource && hasLine {
-			prefixes = append(prefixes, fmt.Sprintf("[%s:%d]", source, line))
-		} else if hasFunc && hasLine {
-			prefixes = append(prefixes, fmt.Sprintf("[%s:%d]", funcName, line))
-		} else if hasSource {
-			prefixes = append(prefixes, fmt.Sprintf("[%s]", source))
-		} else if hasFunc {
-			prefixes = append(prefixes, fmt.Sprintf("[%s]", funcName))
-		} else if hasLine {
-			prefixes = append(prefixes, fmt.Sprintf("[%d]", line))
-		} else {
-			prefixes = append(prefixes, "[LUA]")
-		}
-
-		if plugin, ok := entry.Data["plugin"].(string); ok {
-			prefixes = append(prefixes, fmt.Sprintf("[Plugin: %s]", plugin))
-		}
+	caller := f.FormatCaller(entry)
+	formattedLua := f.FormatLua(entry)
+	if formattedLua != "" {
+		prefixes = append(prefixes, formattedLua)
 	}
-	formattedText := strings.Join(prefixes, " ") + " " + entry.Message + "\n"
+	formattedPrefix := f.FormatPrefix(entry)
+	if formattedPrefix != "" {
+		prefixes = append(prefixes, formattedPrefix)
+	}
+
+	formattedText := ""
+	if caller != "" {
+		formattedText = strings.Join(prefixes, " ") + " " + entry.Message + "\n" + fmt.Sprintf("  Caller: %s\n", caller)
+	} else {
+		formattedText = strings.Join(prefixes, " ") + " " + entry.Message + "\n"
+	}
 
 	return []byte(
 		formattedText,

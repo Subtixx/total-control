@@ -6,17 +6,28 @@
         "strict": true,
         "noUnusedLocals": true,
         "noUnusedParameters": true,
-        "erasableSyntaxOnly": true,
+        //"erasableSyntaxOnly": true,
+        "erasableSyntaxOnly": false,
         "noFallthroughCasesInSwitch": true,
         "noUncheckedSideEffectImports": true,
         "types": [
             "vite/client",
             "unplugin-icons/types/vue"
         ],
+        "typeRoots": [
+            "./node_modules/@types",
+            "./src/@types"
+        ],
         "baseUrl": ".",
         "paths": {
             "@/*": [
                 "src/*"
+            ],
+            "@types/*": [
+                "src/@types/*"
+            ],
+            "@wails/*": [
+                "wailsjs/*"
             ],
             "@assets/*": [
                 "src/assets/*"

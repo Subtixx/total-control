@@ -16,6 +16,12 @@
     "productName": "TotalControl",
     "productVersion": "1.0.0",
     "companyName": "IT-Hock",
-    "copyright": "© 2025 IT-Hock"
+    "copyright": "© 2025 IT-Hock",
+    "protocols": [
+      {
+        "scheme": "tcontrol",
+        "description": "TotalControl Protocol"
+      }
+    ]
   }
 }

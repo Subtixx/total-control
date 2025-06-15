@@ -18,6 +18,8 @@ export default defineConfig({
     resolve: {
         alias: {
             "@": fileURLToPath(new URL("./src", import.meta.url)),
+            "@types": fileURLToPath(new URL("./src/@types", import.meta.url)),
+            "@wails": fileURLToPath(new URL("./wailsjs", import.meta.url)),
             "@stores": fileURLToPath(new URL("./src/stores", import.meta.url)),
             "@components": fileURLToPath(new URL("./src/components", import.meta.url)),
             "@assets": fileURLToPath(new URL("./src/assets", import.meta.url)),

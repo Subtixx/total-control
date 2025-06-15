@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import {ref} from 'vue';
 import {useRouter} from 'vue-router';
-import {useDebounceFn} from '@vueuse/core';
 import {Game, useGamesStore} from '@stores/games';
 import GameCard from "@components/GameCard.vue";
 
@@ -99,7 +98,3 @@ const fetchGame = async () => {
         <GameCard v-else-if="isLoading"/>
     </div>
 </template>
-
-<style scoped lang="scss">
-
-</style>

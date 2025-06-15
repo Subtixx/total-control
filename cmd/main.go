@@ -4,155 +4,53 @@ import (
 	"TotalControl/backend/scripting"
 	"TotalControl/backend/utils"
 	"flag"
-	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
-	lua "github.com/yuin/gopher-lua"
 	"os"
 )
 
-func testLuaEngine() {
-	luaEngine, _ := scripting.NewLuaModProviderEngine(uuid.New())
-	if err := luaEngine.LoadScript(`
-local mods = {
-	{id = "mod1", name = "Mod One", author = "Author A", version = "1.0", enabled = true, game_versions = { {version = "1.0"} }},
-	{id = "mod2", name = "Mod Two", author = "Author B", version = "1.1", enabled = false, game_versions = { {version = "1.1"} }},
-}
-plugin = {
-	GetInstalledMods = function()
-		return mods
-	end,
-	GetModByID = function(id)
-		for _, mod in ipairs(mods) do
-			if mod.id == id then
-				return mod
-			end
-		end
-	end,
-	AddMod = function(mod)
-		log.Info("Adding mod:", mod.name)
-		return true
-	end,
-	RemoveMod = function(id)
-		log.Info("Removing mod with ID:", id)
-		return true
-	end,
-	UpdateMod = function(mod)
-		log.Info("Updating mod:", mod.name)
-		return true
-	end,
-	GetGameModDirectory = function()
-		return "/path/to/mods"
-	end,
-	GetGameID = function()
-		return "game123"
-	end,
-}
-log.debug("Lua script loaded successfully. Plugin table initialized with methods for mod management.")
-log.debug(operating_system.getOperatingSystem())
-if operating_system.is_windows then
-	log.debug("Running on Windows")
-elseif operating_system.is_linux then
-	log.debug("Running on Linux")
-elseif operating_system.is_macos then
-	log.debug("Running on MacOS")
-else
-	log.debug("Running on an unknown operating system")
-end
-`); err != nil {
-		log.Fatalf("Failed to load Lua script: %v", err)
-	}
+var logPath *string
+var logLevel *string
 
-	// Get global plugin table
-	plugin := luaEngine.L.GetGlobal("plugin")
-	if plugin.Type() != lua.LTTable {
-		log.Fatal("Plugin table not found in Lua script")
-	}
-
-	// Validate plugin table
-	if luaEngine.L.GetField(plugin, "GetInstalledMods").Type() != lua.LTFunction {
-		log.Fatal("GetInstalledMods method not found in plugin table")
-	}
-	if luaEngine.L.GetField(plugin, "GetModByID").Type() != lua.LTFunction {
-		log.Fatal("GetModByID method not found in plugin table")
-	}
-	if luaEngine.L.GetField(plugin, "AddMod").Type() != lua.LTFunction {
-		log.Fatal("AddMod method not found in plugin table")
-	}
-	if luaEngine.L.GetField(plugin, "RemoveMod").Type() != lua.LTFunction {
-		log.Fatal("RemoveMod method not found in plugin table")
-	}
-	if luaEngine.L.GetField(plugin, "UpdateMod").Type() != lua.LTFunction {
-		log.Fatal("UpdateMod method not found in plugin table")
-	}
-	if luaEngine.L.GetField(plugin, "GetGameModDirectory").Type() != lua.LTFunction {
-		log.Fatal("GetGameModDirectory method not found in plugin table")
-	}
-	if luaEngine.L.GetField(plugin, "GetGameID").Type() != lua.LTFunction {
-		log.Fatal("GetGameID method not found in plugin table")
-	}
-
-	// Call GetInstalledMods method
-	foundMods, err := luaEngine.GetInstalledMods()
+func app() {
+	log.Info("Starting TotalControl...")
+	// Initialize the plugin manager
+	pluginManager, err := scripting.NewPluginManager("plugins")
 	if err != nil {
-		log.Fatalf("Failed to get mods: %v", err)
+		log.Fatalf("Failed to initialize plugin manager: %v", err)
 	}
-	if len(foundMods) == 0 {
-		log.Fatal("No mods found in Lua script")
+	// Iterate through loaded plugins and print their details
+	for _, plugin := range pluginManager.GetLoadedPlugins() {
+		log.Info("\n" + plugin.ToString())
 	}
-	for _, mod := range foundMods {
-		log.Infof("Found mod: ID=%s, Name=%s, Author=%s, Version=%s, Enabled=%t, GameVersions=%v",
-			mod.ID, mod.Name, mod.Author, mod.Version, mod.Enabled, mod.GameVersions)
-	}
-}
-
-func main() {
-	logPath := flag.String("log-path", "", "Path to log file (default: stdout)")
-	logLevel := flag.String("log-level", "debug", "Log level (debug, info, warn, error, fatal, panic)")
-	flag.Parse()
-
-	if *logPath != "" {
-		f, err := os.OpenFile(*logPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
-		if err != nil {
-			log.Fatalf("Failed to open log file: %v", err)
-		}
-		log.SetOutput(f)
-	}
-
-	level, err := log.ParseLevel(*logLevel)
-	if err != nil {
-		log.Warnf("Invalid log level '%s', defaulting to 'info'", *logLevel)
-		level = log.InfoLevel
-	}
-	log.SetLevel(level)
-	log.SetReportCaller(true)
-	log.SetFormatter(&utils.CustomFormatter{})
+	pluginManager.Shutdown()
 
 	/*
-		plugin, err := scripting.LoadLuaPlugin("plugins/factorio")
+			plugin, err := scripting.LoadLuaPlugin("plugins/factorio")
+			if err != nil {
+				log.Fatalf("Failed to load Lua plugin: %v", err)
+			}
+
+		plugin, err := scripting.LoadLuaPluginFromZip("plugins/Factorio.tcplugin")
 		if err != nil {
-			log.Fatalf("Failed to load Lua plugin: %v", err)
+			log.Fatalf("Failed to load Lua plugin from zip: %v", err)
 		}
+
+		log.Infof("Loaded Lua plugin: ID=%s, Name=%s, Version=%s, EntryPoint=%s, PluginDir=%s",
+			plugin.Id, plugin.Name, plugin.Version, plugin.EntryPoint, plugin.PluginDir)
+
+		modsAvailable, err := plugin.GetMods()
+		if err != nil {
+			log.Fatalf("Failed to get mods: %v", err)
+		}
+		if len(modsAvailable) == 0 {
+			log.Fatal("No mods found in Lua plugin")
+		}
+		for k, mod := range modsAvailable {
+			log.Debugf("Mod %s: %+v", k, mod)
+		}
+
+		plugin.Shutdown()
 	*/
-	plugin, err := scripting.LoadLuaPluginFromZip("plugins/Factorio.tcplugin")
-	if err != nil {
-		log.Fatalf("Failed to load Lua plugin from zip: %v", err)
-	}
-
-	log.Infof("Loaded Lua plugin: ID=%s, Name=%s, Version=%s, EntryPoint=%s, PluginDir=%s",
-		plugin.Id, plugin.Name, plugin.Version, plugin.EntryPoint, plugin.PluginDir)
-
-	modsAvailable, err := plugin.GetMods()
-	if err != nil {
-		log.Fatalf("Failed to get mods: %v", err)
-	}
-	if len(modsAvailable) == 0 {
-		log.Fatal("No mods found in Lua plugin")
-	}
-	for k, mod := range modsAvailable {
-		log.Debugf("Mod %s: %+v", k, mod)
-	}
-
-	plugin.Shutdown()
 
 	/*
 		// Test factorio lua
@@ -188,6 +86,54 @@ func main() {
 		}
 		log.Infof("Game mod directory: %s", modPath)
 	*/
+}
+
+func packPlugin(pluginDir *string) {
+	plugin, err := scripting.LoadLuaPlugin(*pluginDir)
+	if err != nil {
+		log.Fatalf("Failed to load Lua plugin: %v", err)
+	}
+	if err := plugin.Pack(); err != nil {
+		log.Fatalf("Failed to pack plugin: %v", err)
+	}
+	log.Infof("Packed plugin '%s' into '%s.tcplugin'", plugin.Name, plugin.Name)
+}
+
+func main() {
+	logPath = flag.String("log-path", "", "Path to log file (default: stdout)")
+	logLevel = flag.String("log-level", "debug", "Log level (debug, info, warn, error, fatal, panic)")
+	pluginDir := flag.String("plugin-dir", "", "A directory to load a plugin from")
+	pluginPack := flag.Bool("plugin-pack", false, "Pack the plugin into a .tcplugin file")
+
+	flag.Parse()
+
+	if *logPath != "" {
+		f, err := os.OpenFile(*logPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+		if err != nil {
+			log.Fatalf("Failed to open log file: %v", err)
+		}
+		log.SetOutput(f)
+	}
+
+	level, err := log.ParseLevel(*logLevel)
+	if err != nil {
+		log.Warnf("Invalid log level '%s', defaulting to 'info'", *logLevel)
+		level = log.InfoLevel
+	}
+	log.SetLevel(level)
+	log.SetReportCaller(true)
+	log.SetFormatter(&utils.CustomFormatter{})
+
+	if *pluginDir != "" {
+		log.Infof("Loading plugin from directory: %s", *pluginDir)
+		if *pluginPack {
+			packPlugin(pluginDir)
+			return
+		}
+		return
+	}
+
+	app()
 }
 
 /*

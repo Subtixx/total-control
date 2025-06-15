@@ -86,7 +86,6 @@ useInfiniteScroll(
 
 <template>
     <div class="flex gap-8 items-start" v-if="!isLoading && gameDetails">
-        <!-- Game Info (Left) -->
         <div class="w-full max-w-sm bg-base-300 rounded-xl shadow p-6 flex flex-col items-center">
             <img class="w-48 h-64 object-cover rounded-lg mb-4"
                  :src="gameDetails?.capsule"
@@ -99,42 +98,70 @@ useInfiniteScroll(
                 {{ gameDetails?.description }}
             </p>
         </div>
-        <!-- Mods Grid (Right) -->
         <div class="flex-1 overflow-y-auto p-4" ref="el">
-            <h2 class="text-2xl font-semibold mb-4">Mods</h2>
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                <div
-                    v-for="mod in mods"
-                    :key="mod.id"
-                    class="card bg-base-100 shadow rounded-lg p-4"
-                >
-                    <div class="font-bold text-lg mb-1">{{ mod.name }}</div>
-                    <div class="text-base-content/60">
-                        {{ mod.description }}
+            <div>
+                <h2 class="text-2xl font-semibold mb-4">Installed Mods</h2>
+                <div v-if="gameDetails?.installedMods.length > 0"
+                     class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                    <div
+                        v-for="mod in gameDetails.installedMods"
+                        :key="mod.id"
+                        class="card bg-base-100 shadow rounded-lg p-4"
+                    >
+                        <div class="font-bold text-lg mb-1">{{ mod.name }}</div>
+                        <div class="text-base-content/60">
+                            {{ mod.description }}
+                        </div>
+                        <div class="mt-2">
+                            <a
+                                class="btn btn-secondary btn-sm"
+                            >
+                                Uninstall
+                            </a>
+                        </div>
                     </div>
-                    <div class="mt-2">
-                        <a
-                            class="btn btn-primary btn-sm"
-                        >
-                            Install
-                        </a>
+                    <div v-if="gameDetails.installedMods.length === 0" class="text-center col-span-3">
+                        <p class="text-base-content/70">No mods installed for this game.</p>
+                        <p class="text-base-content/70">Browse available mods below to install.</p>
                     </div>
                 </div>
             </div>
-            <div v-if="canLoadMore && !modsLoading" class="text-center mt-4">
-                <button
-                    class="btn btn-primary"
-                    @click="loadMoreMods(gameDetails?.id || 0)"
-                >
-                    Load More Mods
-                </button>
-            </div>
-            <div v-if="modsLoading" class="flex justify-center mt-4">
-                <span class="loading loading-spinner loading-md"></span>
-                <span class="ml-2">Loading more mods...</span>
-            </div>
-            <div v-if="!canLoadMore && !modsLoading && mods.length === 0" class="text-center mt-4">
-                <p class="text-base-content/70">No mods available for this game.</p>
+            <div>
+                <h2 class="text-2xl font-semibold mb-4">Available Mods</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                    <div
+                        v-for="mod in mods"
+                        :key="mod.id"
+                        class="card bg-base-100 shadow rounded-lg p-4"
+                    >
+                        <div class="font-bold text-lg mb-1">{{ mod.name }}</div>
+                        <div class="text-base-content/60">
+                            {{ mod.description }}
+                        </div>
+                        <div class="mt-2">
+                            <a
+                                class="btn btn-primary btn-sm"
+                            >
+                                Install
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div v-if="canLoadMore && !modsLoading" class="text-center mt-4">
+                    <button
+                        class="btn btn-primary"
+                        @click="loadMoreMods(gameDetails?.id || 0)"
+                    >
+                        Load More Mods
+                    </button>
+                </div>
+                <div v-if="modsLoading" class="flex justify-center mt-4">
+                    <span class="loading loading-spinner loading-md"></span>
+                    <span class="ml-2">Loading more mods...</span>
+                </div>
+                <div v-if="!canLoadMore && !modsLoading && mods.length === 0" class="text-center mt-4">
+                    <p class="text-base-content/70">No mods available for this game.</p>
+                </div>
             </div>
         </div>
     </div>

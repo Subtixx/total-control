@@ -5,6 +5,16 @@ import (
 	lua "github.com/yuin/gopher-lua"
 )
 
+func LuaRegisterLogObject(L *lua.LState) {
+	logTable := L.NewTable()
+	logTable.RawSetString("debug", L.NewFunction(luaLogDebug))
+	logTable.RawSetString("info", L.NewFunction(luaLogInfo))
+	logTable.RawSetString("warn", L.NewFunction(luaLogWarn))
+	logTable.RawSetString("error", L.NewFunction(luaLogError))
+	logTable.RawSetString("fatal", L.NewFunction(luaLogFatal))
+	L.SetGlobal("log", logTable)
+}
+
 func luaLog(L *lua.LState, stackTrace bool) (string, []interface{}, log.Fields) {
 	if L.GetTop() < 1 {
 		log.WithField("lua", true).Error("No message provided for debug log")
@@ -85,14 +95,4 @@ func luaLogFatal(L *lua.LState) int {
 	}
 	log.WithFields(fields).Fatalf(msg, args...)
 	return 0
-}
-
-func luaRegisterLogObject(L *lua.LState) {
-	logTable := L.NewTable()
-	logTable.RawSetString("debug", L.NewFunction(luaLogDebug))
-	logTable.RawSetString("info", L.NewFunction(luaLogInfo))
-	logTable.RawSetString("warn", L.NewFunction(luaLogWarn))
-	logTable.RawSetString("error", L.NewFunction(luaLogError))
-	logTable.RawSetString("fatal", L.NewFunction(luaLogFatal))
-	L.SetGlobal("log", logTable)
 }

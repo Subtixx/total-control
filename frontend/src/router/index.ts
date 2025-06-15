@@ -1,8 +1,10 @@
 import {createRouter, createWebHashHistory} from "vue-router";
 import HomeView from "@views/HomeView.vue";
-import AboutView from "@views/AboutView.vue";
 import AddGameView from "@views/AddGameView.vue";
 import GameDetailsView from "@views/GameDetailsView.vue";
+import SettingsView from "@views/SettingsView.vue";
+import PluginsView from "@views/PluginsView.vue";
+import NotFoundView from "@views/NotFoundView.vue";
 
 const router = createRouter({
     history: createWebHashHistory(),
@@ -23,10 +25,20 @@ const router = createRouter({
             component: GameDetailsView,
         },
         {
-            path: "/about",
-            name: "about",
-            component: AboutView,
+            path: "/settings",
+            name: "Settings",
+            component: SettingsView,
         },
+        {
+            path: "/plugins",
+            name: "Plugins",
+            component: PluginsView,
+        },
+        {
+            path: "/:pathMatch(.*)*",
+            name: "NotFound",
+            component: NotFoundView,
+        }
     ],
 });
 

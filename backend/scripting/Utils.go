@@ -5,6 +5,22 @@ import (
 	lua "github.com/yuin/gopher-lua"
 )
 
+func GetOrCreateTable(L *lua.LState, name string) *lua.LTable {
+	if L == nil {
+		log.Error("Lua state is nil, cannot extend table object")
+		return nil
+	}
+	var table *lua.LTable
+	if v := L.GetGlobal(name); v.Type() != lua.LTTable {
+		log.Warnf("Global '%s' is not a table, creating a new one", name)
+		table = L.NewTable()
+	} else {
+		table = v.(*lua.LTable)
+	}
+
+	return table
+}
+
 // luaTableSize returns the size of a Lua table
 func luaTableSize(L *lua.LState) int {
 	table := L.CheckTable(1)

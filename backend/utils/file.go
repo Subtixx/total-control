@@ -3,6 +3,7 @@ package utils
 import (
 	"archive/zip"
 	"encoding/json"
+	"fmt"
 	log "github.com/sirupsen/logrus"
 	"io"
 	"os"
@@ -52,27 +53,6 @@ func (file *File) IsHidden() bool {
 
 func (file *File) ToString() string {
 	return file.FileName + " (" + file.FilePath + ")"
-}
-
-func (file *File) IsExecutable() bool {
-	if file.FileInfo.IsDir() {
-		return false // Directories are not executable
-	}
-
-	// Check if the file has a known executable extension
-	executableExtensions := []string{".exe", ".bat", ".sh", ".bin", ".out"}
-	for _, ext := range executableExtensions {
-		if strings.EqualFold(file.FileExtension, ext) {
-			return true
-		}
-	}
-
-	// On Unix-like systems, check the file permissions
-	if file.FileInfo.Mode()&0111 != 0 {
-		return true // The file is executable
-	}
-
-	return false // Not an executable file
 }
 
 func (file *File) GetZipFileContents(filePath []string) (map[string]*File, error) {
@@ -190,7 +170,7 @@ func FileTouch(filePath string, content ...string) error {
 
 func ReadFile(filePath string) ([]byte, error) {
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
-		return nil, os.ErrNotExist // File does not exist
+		return nil, fmt.Errorf("file %s does not exist", filePath)
 	}
 
 	file, err := os.Open(filePath)
@@ -222,4 +202,19 @@ func ReadJSONFile(filePath string) (map[string]interface{}, error) {
 		return nil, err
 	}
 	return jsonData, nil
+}
+
+func SanitizeFileName(fileName string) string {
+	// Replace all non-alphanumeric characters with underscores
+	sanitized := strings.Map(func(r rune) rune {
+		if r >= 'a' && r <= 'z' || r >= 'A' && r <= 'Z' || r >= '0' && r <= '9' || r == '_' {
+			return r
+		}
+		return '_'
+	}, fileName)
+
+	// Remove leading and trailing underscores
+	sanitized = strings.Trim(sanitized, "_")
+
+	return sanitized
 }

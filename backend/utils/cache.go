@@ -2,6 +2,7 @@ package utils
 
 import (
 	"encoding/json"
+	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 	"math"
 	"os"
@@ -15,38 +16,46 @@ type CacheValue struct {
 }
 
 type Cache struct {
+	uuid  uuid.UUID
 	value map[string]CacheValue
 }
 
-func NewCache(filename string) *Cache {
+func NewCache(filename string, uuid uuid.UUID) *Cache {
 	cache := &Cache{
 		value: make(map[string]CacheValue),
+		uuid:  uuid,
 	}
 
 	if filename == "" {
-		log.Warn("Cache filename is empty, using in-memory cache only.")
+		cache.Logger().Warn("Cache filename is empty, using in-memory cache only.")
 		return cache
 	}
 
 	if _, err := os.Stat(filepath.Dir(filename)); os.IsNotExist(err) {
-		log.Warnf("Cache directory %s does not exist.", filepath.Dir(filename))
+		cache.Logger().Warnf("Cache directory %s does not exist.", filepath.Dir(filename))
 		return cache
 	}
 
 	if FileExists(filename) == false {
 		err := FileTouch(filename, "{}")
 		if err != nil {
-			log.Errorf("Failed to create cache file %s: %v", filename, err)
+			cache.Logger().Errorf("Failed to create cache file %s: %v", filename, err)
 			return cache
 		}
 	}
 
 	if err := cache.Load(filename); err != nil {
-		log.Errorf("Failed to load cache from file %s: %v", filename, err)
+		cache.Logger().Errorf("Failed to load cache from file %s: %v", filename, err)
 		return cache
 	}
 
 	return cache
+}
+
+func (c *Cache) Logger() *log.Entry {
+	return log.WithFields(log.Fields{
+		"prefix": "CACHE",
+	})
 }
 
 func (c *Cache) HasKey(key string) (bool, error) {
@@ -77,7 +86,7 @@ func (c *Cache) Get(key string) (interface{}, error) {
 
 func (c *Cache) Set(key string, value interface{}, expiration int) error {
 	if expiration >= math.MaxInt {
-		log.Warnf("Expiration time %d exceeds maximum allowed value, setting to 0", expiration)
+		c.Logger().Warnf("Expiration time %d exceeds maximum allowed value, setting to 0", expiration)
 		expiration = 0
 	}
 	expireTime := 0
@@ -114,7 +123,7 @@ func (c *Cache) Save(filename string) error {
 	defer func(file *os.File) {
 		err := file.Close()
 		if err != nil {
-			log.Errorf("error closing cache file: %v", err)
+			c.Logger().Errorf("error closing cache file: %v", err)
 		}
 	}(file)
 
@@ -133,7 +142,7 @@ func (c *Cache) Load(filename string) error {
 	defer func(file *os.File) {
 		err := file.Close()
 		if err != nil {
-			log.Errorf("error closing cache file: %v", err)
+			c.Logger().Errorf("error closing cache file: %v", err)
 		}
 	}(file)
 

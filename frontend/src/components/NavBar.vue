@@ -1,81 +1,13 @@
 <script setup lang="ts">
-import {onMounted, ref, type Ref} from "vue";
 import SearchBar from "@components/SearchBar.vue";
 import {useRouter} from "vue-router";
 
-
-const activeTheme: Ref<string | null> = ref(null);
 const router = useRouter();
-
-let availableThemes = [
-    "light",
-    "dark",
-    "cupcake",
-    "bumblebee",
-    "emerald",
-    "corporate",
-    "synthwave",
-    "retro",
-    "cyberpunk",
-    "valentine",
-    "halloween",
-    "garden",
-    "forest",
-    "aqua",
-    "lofi",
-    "pastel",
-    "fantasy",
-    "wireframe",
-    "black",
-    "luxury",
-    "dracula",
-    "cmyk",
-    "autumn",
-    "business",
-    "acid",
-    "lemonade",
-    "night",
-    "coffee",
-    "winter",
-    "dim",
-    "nord",
-    "sunset",
-    "caramellatte",
-    "abyss",
-    "silk"
-];
-
-onMounted(() => {
-    activeTheme.value = localStorage.getItem('theme');
-    if (activeTheme.value) {
-        setTheme(activeTheme.value);
-    } else {
-        const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-        setTheme(systemTheme);
-    }
-});
-
-const setTheme = (theme: string) => {
-    document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('theme', theme);
-};
 </script>
 
 <template>
     <div class="flex items-center gap-4 flex-shrink-0 h-16 px-4 border-b border-base-200 bg-base-300">
         <SearchBar/>
-        <select
-            class="select w-32"
-            @change="setTheme($event?.target?.value)">
-            <option
-                v-for="theme in availableThemes"
-                :selected="activeTheme === theme"
-                :key="theme"
-                :value="theme">
-                {{ theme }}
-            </option>
-            <option value="system">System Default</option>
-        </select>
         <button
             v-if="false"
             class="flex items-center justify-center h-10 px-4 text-sm font-medium rounded btn hover:btn-primary">

@@ -1,0 +1,8 @@
+[Desktop Entry]
+Categories=Game;Utility;
+Exec=/usr/bin/wails-open-file %u
+Icon=wails-open-file.png
+Name=Total Control
+Terminal=false
+Type=Application
+MimeType=x-scheme-handler/tcontrol;

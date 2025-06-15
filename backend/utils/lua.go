@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"encoding/json"
 	lua "github.com/yuin/gopher-lua"
 	"strings"
 )
@@ -116,6 +115,18 @@ func MapToLuaTable(L *lua.LState, m map[string]interface{}) *lua.LTable {
 	return tbl
 }
 
+func MultiMapToLuaTable(L *lua.LState, m map[string][]interface{}) *lua.LTable {
+	tbl := L.CreateTable(len(m), 0)
+	for key, values := range m {
+		arr := L.CreateTable(len(values), 0)
+		for i, value := range values {
+			arr.RawSetInt(i+1, ToLuaValue(L, value))
+		}
+		tbl.RawSetString(key, arr)
+	}
+	return tbl
+}
+
 func LuaTableToMap(L *lua.LState, tbl *lua.LTable) map[string]interface{} {
 	result := make(map[string]interface{})
 	// Use FromLuaValue to convert Lua values to Go values
@@ -125,54 +136,19 @@ func LuaTableToMap(L *lua.LState, tbl *lua.LTable) map[string]interface{} {
 	return result
 }
 
-func LuaJsonDecode(L *lua.LState) int {
-	jsonStr := L.ToString(1)
-	if jsonStr == "" {
-		L.Push(lua.LNil)
-		return 1
-	}
-
-	var result map[string]interface{}
-	err := json.Unmarshal([]byte(jsonStr), &result)
-	if err != nil {
-		L.Push(lua.LNil)
-		return 1
-	}
-	L.Push(MapToLuaTable(L, result))
-	return 1
-}
-
-func LuaJsonEncode(L *lua.LState) int {
-	table := L.ToTable(1)
-	if table == nil {
-		L.Push(lua.LNil)
-		return 1
-	}
-
-	result := make(map[string]interface{})
-	table.ForEach(func(key lua.LValue, value lua.LValue) {
-		switch key.Type() {
-		case lua.LTString:
-			switch value.Type() {
-			case lua.LTString:
-				result[key.String()] = value.String()
-			case lua.LTNumber:
-				result[key.String()] = float64(value.(lua.LNumber))
-			case lua.LTBool:
-				result[key.String()] = bool(value.(lua.LBool))
-			default:
-				result[key.String()] = nil
-			}
-		default:
-			L.RaiseError("Unsupported key type: %s", key.Type().String())
+func LuaTableToMultiMap(L *lua.LState, tbl *lua.LTable) map[string][]interface{} {
+	result := make(map[string][]interface{})
+	// Use FromLuaValue to convert Lua values to Go values
+	tbl.ForEach(func(key lua.LValue, value lua.LValue) {
+		if arr, ok := value.(*lua.LTable); ok {
+			var values []interface{}
+			arr.ForEach(func(i lua.LValue, v lua.LValue) {
+				values = append(values, FromLuaValue(L, v))
+			})
+			result[key.String()] = values
+		} else {
+			result[key.String()] = []interface{}{FromLuaValue(L, value)}
 		}
 	})
-
-	jsonData, err := json.Marshal(result)
-	if err != nil {
-		L.Push(lua.LNil)
-		return 1
-	}
-	L.Push(lua.LString(jsonData))
-	return 1
+	return result
 }

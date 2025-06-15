@@ -72,7 +72,7 @@ func luaIsMacOS(L *lua.LState) int {
 	return 1
 }
 
-func luaExtendOsTable(l *lua.LState) {
+func LuaExtendOsTable(l *lua.LState) {
 	osTable := l.GetGlobal("os")
 	tbl, ok := osTable.(*lua.LTable)
 	if !ok {
