@@ -7,7 +7,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	"io"
 	"net/http"
-	"os"
 )
 
 func GetAppDetails(appID string) (*AppDetailsResponse, error) {
@@ -50,27 +49,7 @@ func GetAppDetails(appID string) (*AppDetailsResponse, error) {
 		log.Infof("Game is maybe not available in your region or not found: %+v", appDetails)
 		return nil, errors.New("app details not found or not available")
 	}
-	log.Debugf("Fetched app details for app ID %d", appID)
-
-	// Save rawResponse to a file for debugging purposes
-	file, err := os.Create(fmt.Sprintf("data/steam/app_details_%d.json", appID))
-	if err != nil {
-		log.Errorf("Failed to create file for app details: %v", err)
-	} else {
-		defer func(file *os.File) {
-			err := file.Close()
-			if err != nil {
-				log.Errorf("Error closing file for app details: %v", err)
-			}
-		}(file)
-
-		// Write the raw response to the file
-		if _, err := file.Write(data); err != nil {
-			log.Errorf("Failed to write app details to file: %v", err)
-		} else {
-			log.Infof("App details saved to data/steam/app_details_%d.json", appID)
-		}
-	}
+	log.Debugf("Fetched app details for app ID %s", appID)
 
 	return appDetails, nil
 }

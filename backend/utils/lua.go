@@ -1,7 +1,9 @@
 package utils
 
 import (
+	"fmt"
 	lua "github.com/yuin/gopher-lua"
+	"reflect"
 	"strings"
 )
 
@@ -151,4 +153,23 @@ func LuaTableToMultiMap(L *lua.LState, tbl *lua.LTable) map[string][]interface{}
 		}
 	})
 	return result
+}
+
+func StructToLuaTable(L *lua.LState, s interface{}) *lua.LTable {
+	tbl := L.NewTable()
+	val := reflect.ValueOf(s)
+	typ := reflect.TypeOf(s)
+
+	// If pointer, get the element
+	if val.Kind() == reflect.Ptr {
+		val = val.Elem()
+		typ = typ.Elem()
+	}
+
+	for i := 0; i < val.NumField(); i++ {
+		field := typ.Field(i)
+		fieldValue := val.Field(i)
+		tbl.RawSetString(field.Name, lua.LString(fmt.Sprintf("%v", fieldValue.Interface())))
+	}
+	return tbl
 }
