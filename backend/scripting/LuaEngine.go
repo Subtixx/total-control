@@ -4,6 +4,7 @@ package scripting
 // TODO: Create threads for each lua script execution
 
 import (
+	"TotalControl/backend/plugins"
 	"TotalControl/backend/utils"
 	"context"
 	"errors"
@@ -11,6 +12,7 @@ import (
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 	lua "github.com/yuin/gopher-lua"
+	"path"
 	"strings"
 	"time"
 )
@@ -61,6 +63,16 @@ func GetLuaEngine(L *lua.LState) *LuaEngine {
 	}
 
 	return engine
+}
+
+func GetLogger(L *lua.LState) *log.Entry {
+	luaEngine := GetLuaEngine(L)
+	if luaEngine != nil {
+		return luaEngine.Logger()
+	}
+	return log.WithFields(log.Fields{
+		"lua": true,
+	})
 }
 
 func (l *LuaEngine) Logger() *log.Entry {
@@ -126,7 +138,8 @@ func (l *LuaEngine) setupCache() error {
 	if err != nil {
 		log.Errorf("Failed to create cache directory: %v", err)
 	}
-	l.Cache = utils.NewCache(fmt.Sprintf("plugins/.cache/%s.json", l.uuid.String()), l.uuid)
+	pluginAppDataPath := plugins.GetPluginAppDataPath(l.uuid)
+	l.Cache = utils.NewCache(path.Join(pluginAppDataPath, "cache.json"), l.uuid)
 	return nil
 }
 
@@ -155,7 +168,10 @@ func (l *LuaEngine) registerObjects() {
 func (l *LuaEngine) Shutdown() error {
 	var err error = nil
 	if l.Cache != nil {
-		err = l.Cache.Save(fmt.Sprintf("plugins/.cache/%s.json", l.uuid.String()))
+		err = l.Cache.Save()
+		if err != nil {
+			l.Logger().Errorf("Failed to save cache: %v", err)
+		}
 	}
 	l.L.Close()
 	l.Logger().Debugf("LuaEngine %s has been shut down", l.uuid.String())
@@ -294,6 +310,14 @@ func (l *LuaEngine) HasMethod(obj lua.LValue, method string) bool {
 
 func (l *LuaEngine) Close() {
 	l.L.Close()
+}
+
+func (l *LuaEngine) String() string {
+	return "LuaEngine{" +
+		"\n\tUUID: " + l.uuid.String() +
+		"\n\tCache: " + l.Cache.String() +
+		"\n\tLuaState: " + fmt.Sprintf("%p", l.L) +
+		"\n}"
 }
 
 func (l *LuaEngine) debugPrintLuaState() {

@@ -23,31 +23,11 @@ type PluginInfo struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
 
-	Version       string   `json:"version"`
-	EntryPoint    string   `json:"entry"`
-	Capabilities  []string `json:"capabilities,omitempty"`
-	Functionality []string `json:"functionality,omitempty"`
-}
-
-func (p *PluginInfo) Can(capability string) bool {
-	if p.Capabilities == nil {
-		return false
-	}
-
-	for _, canCapability := range p.Capabilities {
-		if canCapability == capability {
-			return true
-		}
-	}
-	return false
-}
-
-func (p *PluginInfo) CanAccessFileSystem() bool {
-	return p.Can(CapabilityFileSystem)
-}
-
-func (p *PluginInfo) CanAccessNetwork() bool {
-	return p.Can(CapabilityNetwork)
+	Version            string             `json:"version"`
+	EntryPoint         string             `json:"entry"`
+	Capabilities       []string           `json:"capabilities,omitempty"`
+	Functionality      []string           `json:"functionality,omitempty"`
+	SettingDefinitions SettingDefinitions `json:"settings"`
 }
 
 func (p *PluginInfo) IsValid() bool {
@@ -61,7 +41,7 @@ func (p *PluginInfo) IsValid() bool {
 }
 
 // ToString returns a string representation of the PluginInfo.
-func (p *PluginInfo) ToString() string {
+func (p *PluginInfo) String() string {
 	return "PluginInfo{" +
 		"\n\tId: " + p.Id.String() +
 		"\n\tAuthor: " + p.Author +
@@ -70,5 +50,7 @@ func (p *PluginInfo) ToString() string {
 		"\n\tVersion: " + p.Version +
 		"\n\tEntryPoint: " + p.EntryPoint +
 		"\n\tCapabilities: " + fmt.Sprintf("%v", p.Capabilities) +
+		"\n\tFunctionality: " + fmt.Sprintf("%v", p.Functionality) +
+		"\n" + p.SettingDefinitions.String() +
 		"\n}"
 }

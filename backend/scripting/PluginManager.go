@@ -1,10 +1,12 @@
 package scripting
 
 import (
+	"TotalControl/backend/utils"
 	"errors"
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 )
@@ -88,6 +90,12 @@ func (pm *PluginManager) loadPlugin(file string) error {
 	}
 
 	pm.Plugins[luaPlugin.Id.String()] = luaPlugin
+	appDataPath := utils.GetAppDataPath()
+	pluginStoragePath := path.Join(appDataPath, "plugins", luaPlugin.Id.String())
+	err = utils.CreateDirectoryIfNotExists(pluginStoragePath)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

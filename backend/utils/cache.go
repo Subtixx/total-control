@@ -17,6 +17,7 @@ type CacheValue struct {
 
 type Cache struct {
 	uuid  uuid.UUID
+	path  string
 	value map[string]CacheValue
 }
 
@@ -55,12 +56,13 @@ func NewCache(filename string, uuid uuid.UUID) *Cache {
 func (c *Cache) Logger() *log.Entry {
 	return log.WithFields(log.Fields{
 		"prefix": "CACHE",
+		"plugin": c.uuid.String(),
 	})
 }
 
 func (c *Cache) HasKey(key string) (bool, error) {
 	if key == "" {
-		return false, nil // No error, but key is empty
+		return false, nil
 	}
 	_, exists := c.value[key]
 	return exists, nil
@@ -77,6 +79,7 @@ func (c *Cache) Get(key string) (interface{}, error) {
 	}
 
 	if cacheValue.Expiration > 0 && cacheValue.Expiration < int(time.Now().Unix()) {
+		c.Logger().Debugf("Key %s has expired %d.", key, int(time.Now().Unix())-cacheValue.Expiration)
 		delete(c.value, key)
 		return nil, nil
 	}
@@ -98,13 +101,14 @@ func (c *Cache) Set(key string, value interface{}, expiration int) error {
 		Value:      value,
 		Expiration: expireTime,
 	}
-
+	c.Logger().Debugf("Key %s set to %s, expires %d", key, value, expireTime)
 	return nil
 }
 
 func (c *Cache) Delete(key string) error {
 	if _, exists := c.value[key]; exists {
 		delete(c.value, key)
+		c.Logger().Debugf("Key %s deleted", key)
 		return nil
 	}
 	return nil
@@ -115,8 +119,8 @@ func (c *Cache) Clear() error {
 	return nil
 }
 
-func (c *Cache) Save(filename string) error {
-	file, err := os.Create(filename)
+func (c *Cache) Save() error {
+	file, err := os.Create(c.path)
 	if err != nil {
 		return err
 	}
@@ -131,10 +135,14 @@ func (c *Cache) Save(filename string) error {
 	if err := encoder.Encode(c.value); err != nil {
 		return err
 	}
+	c.Logger().Debugf("Cache saved to %s", c.path)
 	return nil
 }
 
 func (c *Cache) Load(filename string) error {
+	c.path = filename
+	c.value = make(map[string]CacheValue)
+
 	file, err := os.Open(filename)
 	if err != nil {
 		return err
@@ -151,4 +159,13 @@ func (c *Cache) Load(filename string) error {
 		return err
 	}
 	return nil
+}
+
+func (c *Cache) String() string {
+	data, err := json.MarshalIndent(c.value, "", "  ")
+	if err != nil {
+		c.Logger().Errorf("error marshaling cache to string: %v", err)
+		return "{}"
+	}
+	return string(data)
 }

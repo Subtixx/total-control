@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"runtime/debug"
 	"strings"
 	"time"
 )
@@ -97,7 +98,7 @@ func LoadLuaPluginFromZip(pluginZipPath string) (*LuaPlugin, error) {
 	}
 	luaEngineOptions := LuaEngineSetupOptions{
 		Context:       context.Background(),
-		ContextValues: map[string]interface{}{"plugin": &plugin},
+		ContextValues: map[string]interface{}{"plugin": plugin},
 	}
 
 	if err := plugin.Setup(luaEngineOptions); err != nil {
@@ -156,7 +157,7 @@ func LoadLuaPlugin(pluginDir string) (*LuaPlugin, error) {
 	}
 	luaEngineOptions := LuaEngineSetupOptions{
 		Context:       context.Background(),
-		ContextValues: map[string]interface{}{"plugin": &plugin},
+		ContextValues: map[string]interface{}{"plugin": plugin},
 	}
 
 	if err := plugin.Setup(luaEngineOptions); err != nil {
@@ -209,16 +210,10 @@ func (p *LuaPlugin) Logger() *log.Entry {
 }
 
 // ToString returns a string representation of the LuaPlugin.
-func (p *LuaPlugin) ToString() string {
+func (p *LuaPlugin) String() string {
 	return "LuaPlugin{" +
-		"\n\tId: " + p.Id.String() +
-		"\n\tName: " + p.Name +
-		"\n\tDescription: " + p.Description +
-		"\n\tVersion: " + p.Version +
-		"\n\tEntryPoint: " + p.EntryPoint +
-		"\n\tPluginDir: " + p.PluginDir +
-		"\n\tIsPacked: " + fmt.Sprintf("%t", p.IsPacked) +
-		"\n\tEnabled: " + fmt.Sprintf("%t", p.Enabled) +
+		"\n\t" + p.Plugin.String() +
+		"\n\t" + p.LuaEngine.String() +
 		"\n}"
 }
 
@@ -277,6 +272,20 @@ func (p *LuaPlugin) Initialize() error {
 	}
 
 	p.Logger().Debugf("Lua plugin %s initialized with ID %s", p.Name, p.Id.String())
+	return nil
+}
+
+func (p *LuaPlugin) Shutdown() error {
+	err := p.LuaEngine.Shutdown()
+	if err != nil {
+		return fmt.Errorf("failed to shutdown Lua engine: %w", err)
+	}
+	err = p.Plugin.Shutdown()
+	if err != nil {
+		return fmt.Errorf("failed to shutdown plugin: %w", err)
+	}
+
+	p.Logger().Infof("Lua plugin %s with ID %s has been shut down", p.Name, p.Id.String())
 	return nil
 }
 
@@ -351,9 +360,10 @@ func GetLuaPlugin(L *lua.LState) *LuaPlugin {
 		if plugin, ok := v.(*LuaPlugin); ok {
 			return plugin
 		}
-		L.RaiseError("context value 'plugin' is not a LuaPlugin")
+		log.Errorf("context value 'plugin' is not a LuaPlugin, got %T", v)
+		debug.PrintStack()
 	} else {
-		L.RaiseError("context value 'plugin' is nil")
+		log.Error("context value 'plugin' is nil")
 	}
 	return nil
 }

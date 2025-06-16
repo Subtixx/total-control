@@ -20,7 +20,7 @@ func app() {
 	}
 	// Iterate through loaded plugins and print their details
 	for _, plugin := range pluginManager.GetLoadedPlugins() {
-		log.Info("\n" + plugin.ToString())
+		log.Info("\n" + plugin.PluginInfo.String())
 	}
 	pluginManager.Shutdown()
 

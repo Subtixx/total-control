@@ -16,7 +16,7 @@ func FormatPrefixString(prefix string) string {
 	if len(prefix) > 5 {
 		prefix = prefix[:5]
 	}
-	return fmt.Sprintf("[%-5s]", prefix)
+	return fmt.Sprintf("[%-5s]", strings.ToUpper(prefix))
 }
 
 func LoggingLevelString(level log.Level) string {
@@ -81,10 +81,9 @@ func (f *CustomFormatter) FormatLua(entry *log.Entry) string {
 	}
 
 	if formatted == "" {
+		formatted = FormatPrefixString("LUA")
 		if plugin, ok := entry.Data["plugin"].(string); ok {
 			formatted = formatted + FormatPrefixString(plugin)
-		} else {
-			formatted = FormatPrefixString("LUA")
 		}
 	}
 
@@ -118,7 +117,11 @@ func (f *CustomFormatter) Format(entry *log.Entry) ([]byte, error) {
 	}
 	formattedPrefix := f.FormatPrefix(entry)
 	if formattedPrefix != "" {
-		prefixes = append(prefixes, formattedPrefix)
+		if plugin, ok := entry.Data["plugin"].(string); ok {
+			prefixes = append(prefixes, formattedPrefix+FormatPrefixString(plugin))
+		} else {
+			prefixes = append(prefixes, formattedPrefix)
+		}
 	}
 
 	formattedText := ""

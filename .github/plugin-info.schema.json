@@ -1,0 +1,90 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Plugin Info",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "A unique identifier for the plugin, formatted as a UUID."
+    },
+    "name": {
+      "type": "string",
+      "description": "The name of the plugin."
+    },
+    "description": {
+      "type": "string",
+      "description": "A brief description of the plugin's functionality."
+    },
+    "author": {
+      "type": "string",
+      "description": "The name of the author or organization that created the plugin."
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "The version of the plugin, following semantic versioning (e.g., '1.0.0')."
+    },
+    "entry": {
+      "type": "string",
+      "description": "The entry point lua file for the plugin, which is executed when the plugin is loaded."
+    },
+    "capabilities": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "filesystem",
+          "network"
+        ],
+        "description": "A list of capabilities that the plugin provides, such as 'mod-management', 'save-management', etc."
+      },
+      "description": "An array of capabilities that the plugin supports."
+    },
+    "functionality": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "mod_management",
+          "save_game_management"
+        ],
+        "description": "A list of functionalities that the plugin implements, such as 'load-mods', 'save-game', etc."
+      },
+      "description": "An array of functionalities that the plugin implements."
+    },
+    "settings": {
+      "type": "object",
+      "description": "A set of settings for the plugin, which can be configured by the user.",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["string", "number", "boolean", "array", "object"],
+            "description": "The type of the setting."
+          },
+          "description": {
+            "type": "string",
+            "description": "A description of the setting."
+          },
+          "default": {
+            "type": ["string", "number", "boolean", "array", "object", "null"],
+            "description": "The default value for the setting."
+          }
+        },
+        "required": ["type", "description"]
+      }
+    }
+  },
+  "required": [
+    "id",
+    "name",
+    "description",
+    "author",
+    "version",
+    "entry",
+    "functionality"
+  ],
+  "additionalProperties": false
+}

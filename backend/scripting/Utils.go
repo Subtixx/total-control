@@ -22,22 +22,29 @@ func GetOrCreateTable(L *lua.LState, name string) *lua.LTable {
 }
 
 func luaPrint(L *lua.LState) int {
-	// Print function that captures Lua print calls
+	logger := GetLogger(L)
+
 	for i := 1; i <= L.GetTop(); i++ {
 		if str, ok := L.Get(i).(lua.LString); ok {
 			// Log with context lua
-			log.WithField("lua", true).Info(str.String())
+			logger.Info(str.String())
 		} else {
-			log.WithField("lua", true).Info(L.Get(i).Type().String(), ": ", L.Get(i))
+			logger.Info(L.Get(i).Type().String(), ": ", L.Get(i))
 		}
 	}
 	return 0
 }
 
 func luaErrorHandler(L *lua.LState) int {
-	// Custom error handler for Lua
-	if err := L.ToString(1); err != "" {
-		println("Lua Error:", L.ToString(1))
+	logger := GetLogger(L)
+	if L.GetTop() >= 1 {
+		luaErr := L.ToString(1)
+		if luaErr != "" {
+			logger.Error(luaErr)
+		}
+		return 0
 	}
+	logger.Error("Undefined error occurred")
+
 	return 0
 }

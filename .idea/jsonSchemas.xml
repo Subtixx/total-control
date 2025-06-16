@@ -19,6 +19,24 @@
             </SchemaInfo>
           </value>
         </entry>
+        <entry key="plugin-info.schema">
+          <value>
+            <SchemaInfo>
+              <option name="generatedName" value="New Schema" />
+              <option name="name" value="plugin-info.schema" />
+              <option name="relativePathToSchema" value=".github/plugin-info.schema.json" />
+              <option name="patterns">
+                <list>
+                  <Item>
+                    <option name="pattern" value="true" />
+                    <option name="path" value="*/info.json" />
+                    <option name="mappingKind" value="Pattern" />
+                  </Item>
+                </list>
+              </option>
+            </SchemaInfo>
+          </value>
+        </entry>
       </map>
     </state>
   </component>

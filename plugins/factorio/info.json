@@ -4,5 +4,30 @@
   "description": "Enables managing Factorio mods and saves.",
   "author": "IT-Hock",
   "version": "1.0.0",
-  "entry": "plugin.lua"
+  "entry": "plugin.lua",
+  "capabilities": [
+    "filesystem",
+    "network"
+  ],
+  "functionality": [
+    "mod_management",
+    "save_game_management"
+  ],
+  "settings": {
+    "factorio_path": {
+      "type": "string",
+      "description": "The path to the Factorio installation directory.",
+      "default": null
+    },
+    "mod_directory": {
+      "type": "string",
+      "description": "The directory where Factorio mods are stored.",
+      "default": null
+    },
+    "save_directory": {
+      "type": "string",
+      "description": "The directory where Factorio saves are stored.",
+      "default": null
+    }
+  }
 }
