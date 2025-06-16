@@ -7,22 +7,22 @@ import (
 )
 
 const (
-	WindowsOS = "windows"
-	MacOS     = "darwin"
-	LinuxOS   = "linux"
-	UnknownOS = "unknown"
+	OperatingSystemWindows = "windows"
+	OperatingSystemMac     = "darwin"
+	OperatingSystemLinux   = "linux"
+	OperatingSystemUnknown = "unknown"
 )
 
 func GetOperatingSystem() string {
 	switch runtime.GOOS {
 	case "windows":
-		return WindowsOS
+		return OperatingSystemWindows
 	case "darwin":
-		return MacOS
+		return OperatingSystemMac
 	case "linux":
-		return LinuxOS
+		return OperatingSystemLinux
 	default:
-		return UnknownOS
+		return OperatingSystemUnknown
 	}
 }
 
@@ -31,11 +31,11 @@ func GetOperatingSystem() string {
 // macOS: ~/Library/Application Support
 // Linux: ~/.local/share
 func GetCommonUserDataPath() string {
-	if GetOperatingSystem() == WindowsOS {
+	if GetOperatingSystem() == OperatingSystemWindows {
 		return os.Getenv("LOCALAPPDATA")
-	} else if GetOperatingSystem() == MacOS {
+	} else if GetOperatingSystem() == OperatingSystemMac {
 		return os.Getenv("HOME") + "/Library/Application Support"
-	} else if GetOperatingSystem() == LinuxOS {
+	} else if GetOperatingSystem() == OperatingSystemLinux {
 		return os.Getenv("HOME") + "/.local/share"
 	}
 
@@ -62,13 +62,13 @@ func GetAppDataPath() string {
 }
 
 func IsWindows() bool {
-	return GetOperatingSystem() == WindowsOS
+	return GetOperatingSystem() == OperatingSystemWindows
 }
 
-func IsMacOS() bool {
-	return GetOperatingSystem() == MacOS
+func IsMac() bool {
+	return GetOperatingSystem() == OperatingSystemMac
 }
 
 func IsLinux() bool {
-	return GetOperatingSystem() == LinuxOS
+	return GetOperatingSystem() == OperatingSystemLinux
 }

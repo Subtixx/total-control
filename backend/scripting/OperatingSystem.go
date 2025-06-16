@@ -7,15 +7,15 @@ import (
 )
 
 func luaGetOperatingSystem(L *lua.LState) int {
-	// 1 - Windows, 2 - Linux, 3 - MacOS, 0 - Unknown
+	// 1 - Windows, 2 - Linux, 3 - Mac, 0 - Unknown
 	switch utils.GetOperatingSystem() {
-	case utils.WindowsOS:
+	case utils.OperatingSystemWindows:
 		L.Push(lua.LNumber(1))
 		return 1
-	case utils.LinuxOS:
+	case utils.OperatingSystemLinux:
 		L.Push(lua.LNumber(2))
 		return 1
-	case utils.MacOS:
+	case utils.OperatingSystemMac:
 		L.Push(lua.LNumber(3))
 		return 1
 	default:
@@ -26,7 +26,7 @@ func luaGetOperatingSystem(L *lua.LState) int {
 
 func luaIsWindows(L *lua.LState) int {
 	// Check if the current operating system is Windows
-	if utils.GetOperatingSystem() == utils.WindowsOS {
+	if utils.GetOperatingSystem() == utils.OperatingSystemWindows {
 		L.Push(lua.LTrue)
 	} else {
 		L.Push(lua.LFalse)
@@ -36,7 +36,7 @@ func luaIsWindows(L *lua.LState) int {
 
 func luaIsLinux(L *lua.LState) int {
 	// Check if the current operating system is Linux
-	if utils.GetOperatingSystem() == utils.LinuxOS {
+	if utils.GetOperatingSystem() == utils.OperatingSystemLinux {
 		L.Push(lua.LTrue)
 	} else {
 		L.Push(lua.LFalse)
@@ -44,9 +44,9 @@ func luaIsLinux(L *lua.LState) int {
 	return 1
 }
 
-func luaIsMacOS(L *lua.LState) int {
-	// Check if the current operating system is MacOS
-	if utils.GetOperatingSystem() == utils.MacOS {
+func luaIsMac(L *lua.LState) int {
+	// Check if the current operating system is Mac
+	if utils.GetOperatingSystem() == utils.OperatingSystemMac {
 		L.Push(lua.LTrue)
 	} else {
 		L.Push(lua.LFalse)
@@ -65,18 +65,18 @@ func LuaExtendOsTable(l *lua.LState) {
 	l.SetField(tbl, "getOperatingSystem", l.NewFunction(luaGetOperatingSystem))
 	l.SetField(tbl, "isWindows", l.NewFunction(luaIsWindows))
 	l.SetField(tbl, "isLinux", l.NewFunction(luaIsLinux))
-	l.SetField(tbl, "isMacOS", l.NewFunction(luaIsMacOS))
+	l.SetField(tbl, "isMac", l.NewFunction(luaIsMac))
 	l.SetField(tbl, "is_unknown", lua.LFalse)
 	l.SetField(tbl, "is_windows", lua.LFalse)
 	l.SetField(tbl, "is_linux", lua.LFalse)
-	l.SetField(tbl, "is_macos", lua.LFalse)
+	l.SetField(tbl, "is_mac", lua.LFalse)
 	switch utils.GetOperatingSystem() {
-	case utils.WindowsOS:
+	case utils.OperatingSystemWindows:
 		l.SetField(tbl, "is_windows", lua.LTrue)
-	case utils.LinuxOS:
+	case utils.OperatingSystemLinux:
 		l.SetField(tbl, "is_linux", lua.LTrue)
-	case utils.MacOS:
-		l.SetField(tbl, "is_macos", lua.LTrue)
+	case utils.OperatingSystemMac:
+		l.SetField(tbl, "is_mac", lua.LTrue)
 	default:
 		l.SetField(tbl, "is_unknown", lua.LTrue)
 	}
