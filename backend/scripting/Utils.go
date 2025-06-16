@@ -21,17 +21,6 @@ func GetOrCreateTable(L *lua.LState, name string) *lua.LTable {
 	return table
 }
 
-// luaTableSize returns the size of a Lua table
-func luaTableSize(L *lua.LState) int {
-	table := L.CheckTable(1)
-	size := 0
-	table.ForEach(func(_ lua.LValue, _ lua.LValue) {
-		size++
-	})
-	L.Push(lua.LNumber(size))
-	return 1
-}
-
 func luaPrint(L *lua.LState) int {
 	// Print function that captures Lua print calls
 	for i := 1; i <= L.GetTop(); i++ {

@@ -4,25 +4,7 @@ import (
 	"TotalControl/backend/utils"
 	log "github.com/sirupsen/logrus"
 	lua "github.com/yuin/gopher-lua"
-	"os"
 )
-
-func luaOsGetenv(L *lua.LState) int {
-	key := L.ToString(1)
-	if key == "" {
-		L.Push(lua.LNil)
-		return 1
-	}
-
-	value, exists := os.LookupEnv(key)
-	if !exists {
-		L.Push(lua.LNil)
-		return 1
-	}
-
-	L.Push(lua.LString(value))
-	return 1
-}
 
 func luaGetOperatingSystem(L *lua.LState) int {
 	// 1 - Windows, 2 - Linux, 3 - MacOS, 0 - Unknown

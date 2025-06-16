@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 )
 
+// GetFilesByWildcards Function to get all files in a directory and its subdirectories and filtering them by wildcard patterns
+// Example patterns: ["*.txt", "*.log", "*?"] where "*?" matches files without an extension
 func GetFilesByWildcards(dir string, patterns []string) ([]string, error) {
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
 		return nil, err

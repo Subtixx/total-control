@@ -9,14 +9,7 @@ import (
 )
 
 func LuaGetFilesInDirectory(L *lua.LState) int {
-	luaPlugin := GetLuaPlugin(L)
-	if luaPlugin == nil {
-		L.Push(lua.LNil)
-		L.Push(lua.LString(ErrPluginNotFound))
-		return 2
-	}
-
-	if !luaPlugin.CanAccessFileSystem() {
+	if LuaCheckCan(L, plugins.CapabilityFileSystem) == false {
 		L.Push(lua.LNil)
 		L.Push(lua.LString(plugins.ErrFileSystemAccessDenied))
 		return 2
@@ -55,14 +48,7 @@ func LuaGetFilesInDirectory(L *lua.LState) int {
 }
 
 func LuaGetFileName(L *lua.LState) int {
-	luaPlugin := GetLuaPlugin(L)
-	if luaPlugin == nil {
-		L.Push(lua.LNil)
-		L.Push(lua.LString(ErrPluginNotFound))
-		return 2
-	}
-
-	if !luaPlugin.CanAccessFileSystem() {
+	if LuaCheckCan(L, plugins.CapabilityFileSystem) == false {
 		L.Push(lua.LNil)
 		L.Push(lua.LString(plugins.ErrFileSystemAccessDenied))
 		return 2
@@ -80,14 +66,7 @@ func LuaGetFileName(L *lua.LState) int {
 }
 
 func LuaGetFileContent(L *lua.LState) int {
-	luaPlugin := GetLuaPlugin(L)
-	if luaPlugin == nil {
-		L.Push(lua.LNil)
-		L.Push(lua.LString(ErrPluginNotFound))
-		return 2
-	}
-
-	if !luaPlugin.CanAccessFileSystem() {
+	if LuaCheckCan(L, plugins.CapabilityFileSystem) == false {
 		L.Push(lua.LNil)
 		L.Push(lua.LString(plugins.ErrFileSystemAccessDenied))
 		return 2

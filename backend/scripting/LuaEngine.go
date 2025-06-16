@@ -43,12 +43,24 @@ func NewLuaEngine(luaEngineId uuid.UUID) (*LuaEngine, error) {
 }
 
 func GetLuaEngine(L *lua.LState) *LuaEngine {
-	if v := L.Context().Value("luaengine"); v != nil {
-		if engine, ok := v.(*LuaEngine); ok {
-			return engine
-		}
+	ctx := L.Context()
+	if ctx == nil {
+		log.Error("LuaEngine context is nil")
+		return nil
 	}
-	return nil
+	val := ctx.Value("luaengine")
+	if val == nil {
+		log.Error("LuaEngine not found in context")
+		return nil
+	}
+
+	engine, ok := val.(*LuaEngine)
+	if !ok {
+		log.Error("Value in context is not of type *LuaEngine")
+		return nil
+	}
+
+	return engine
 }
 
 func (l *LuaEngine) Logger() *log.Entry {
@@ -127,6 +139,7 @@ func (l *LuaEngine) registerGlobals() {
 
 // registerObjects registers custom objects and extensions
 func (l *LuaEngine) registerObjects() {
+	LuaRegisterCapabilitiesObject(l.L)
 	LuaRegisterLogObject(l.L)
 	LuaRegisterJsonObject(l.L)
 	LuaRegisterRegExObject(l.L)

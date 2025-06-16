@@ -324,6 +324,19 @@ func (p *LuaPlugin) GetHttpClient() *http.Client {
 	return p.HttpClient
 }
 
+func GetLuaHttpClient(L *lua.LState) *http.Client {
+	if L == nil {
+		log.Error("Lua state is nil, cannot get HTTP client")
+		return nil
+	}
+
+	luaPlugin := GetLuaPlugin(L)
+	if luaPlugin != nil {
+		return luaPlugin.GetHttpClient()
+	}
+	return http.DefaultClient
+}
+
 func GetLuaPlugin(L *lua.LState) *LuaPlugin {
 	if L == nil {
 		log.Error("Lua state is nil, cannot get LuaPlugin")
