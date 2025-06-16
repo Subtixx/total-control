@@ -1,3 +1,6 @@
+//go:build http
+// +build http
+
 package scripting
 
 import (

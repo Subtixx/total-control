@@ -26,7 +26,7 @@ func LuaRegisterHttpObject(L *lua.LState) {
 }
 
 func luaHttpGet(L *lua.LState) int {
-	if !LuaCheckCan(L, plugins.CapabilityNetwork) {
+	if !CheckCan(L, plugins.CapabilityNetwork) {
 		L.Push(lua.LFalse)
 		L.Push(lua.LString(plugins.ErrNetworkAccessDenied))
 		return 2
@@ -75,7 +75,7 @@ func luaHttpGet(L *lua.LState) int {
 }
 
 func luaHttpPost(L *lua.LState) int {
-	if !LuaCheckCan(L, plugins.CapabilityNetwork) {
+	if !CheckCan(L, plugins.CapabilityNetwork) {
 		L.Push(lua.LFalse)
 		L.Push(lua.LString(plugins.ErrNetworkAccessDenied))
 		return 2
@@ -144,7 +144,7 @@ func luaHttpPost(L *lua.LState) int {
 }
 
 func luaHttpDownloadFile(L *lua.LState) int {
-	if !LuaCheckCan(L, plugins.CapabilityNetwork) {
+	if !CheckCan(L, plugins.CapabilityNetwork) {
 		L.Push(lua.LFalse)
 		L.Push(lua.LString(plugins.ErrNetworkAccessDenied))
 		return 2

@@ -9,7 +9,7 @@ import (
 )
 
 func LuaGetFilesInDirectory(L *lua.LState) int {
-	if LuaCheckCan(L, plugins.CapabilityFileSystem) == false {
+	if CheckCan(L, plugins.CapabilityFileSystem) == false {
 		L.Push(lua.LNil)
 		L.Push(lua.LString(plugins.ErrFileSystemAccessDenied))
 		return 2
@@ -48,7 +48,7 @@ func LuaGetFilesInDirectory(L *lua.LState) int {
 }
 
 func LuaGetFileName(L *lua.LState) int {
-	if LuaCheckCan(L, plugins.CapabilityFileSystem) == false {
+	if CheckCan(L, plugins.CapabilityFileSystem) == false {
 		L.Push(lua.LNil)
 		L.Push(lua.LString(plugins.ErrFileSystemAccessDenied))
 		return 2
@@ -66,7 +66,7 @@ func LuaGetFileName(L *lua.LState) int {
 }
 
 func LuaGetFileContent(L *lua.LState) int {
-	if LuaCheckCan(L, plugins.CapabilityFileSystem) == false {
+	if CheckCan(L, plugins.CapabilityFileSystem) == false {
 		L.Push(lua.LNil)
 		L.Push(lua.LString(plugins.ErrFileSystemAccessDenied))
 		return 2
