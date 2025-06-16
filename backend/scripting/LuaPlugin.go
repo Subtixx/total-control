@@ -4,19 +4,28 @@ import (
 	"TotalControl/backend/mods"
 	"TotalControl/backend/plugins"
 	"TotalControl/backend/utils"
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 	lua "github.com/yuin/gopher-lua"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
+)
+
+var (
+	ErrPluginNotFound = fmt.Sprintf("LuaPlugin not found in context")
 )
 
 type LuaPlugin struct {
 	plugins.Plugin
 	LuaEngine
+
+	HttpClient *http.Client
 	// -------------------------------
 	plugin *lua.LTable
 	// -------------------------------
@@ -54,6 +63,142 @@ func LoadPlugin(filePath string) (*LuaPlugin, error) {
 	}
 
 	return nil, fmt.Errorf("invalid plugin path: %s", filePath)
+}
+
+// LoadLuaPluginFromZip Loads a plugin using a zip with the custom extension ".tcplugin".
+func LoadLuaPluginFromZip(pluginZipPath string) (*LuaPlugin, error) {
+	files, err := utils.ReadFilesFromZip(pluginZipPath)
+	if err != nil {
+		return nil, err
+	}
+
+	var plugin *LuaPlugin
+	if err := json.Unmarshal(files["info.json"], &plugin); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal plugin info: %w", err)
+	}
+
+	if plugin.Id == uuid.Nil {
+		return nil, fmt.Errorf("plugin ID is not set or is invalid")
+	}
+
+	if plugin.EntryPoint == "" {
+		return nil, fmt.Errorf("plugin entry point is not set")
+	}
+
+	plugin.HttpClient = &http.Client{
+		Timeout: 5 * time.Second,
+	}
+	plugin.PluginDir = pluginZipPath
+	plugin.IsPacked = true
+	// TODO: Load settings
+	plugin.LuaEngine = LuaEngine{
+		L:    lua.NewState(),
+		uuid: plugin.Id,
+	}
+	luaEngineOptions := LuaEngineSetupOptions{
+		Context:       context.Background(),
+		ContextValues: map[string]interface{}{"plugin": &plugin},
+	}
+
+	if err := plugin.Setup(luaEngineOptions); err != nil {
+		return nil, fmt.Errorf("failed to setup Lua plugin: %w", err)
+	}
+
+	scriptFile, ok := files[plugin.EntryPoint]
+	if !ok {
+		return nil, fmt.Errorf("plugin entry point %s not found in zip", plugin.EntryPoint)
+	}
+	luaPlugin, err := loadPluginScript(plugin.L, string(scriptFile))
+	if err != nil {
+		return nil, fmt.Errorf("failed to load Lua plugin script: %w", err)
+	}
+
+	plugin.plugin = luaPlugin
+
+	if err := plugin.Initialize(); err != nil {
+		plugin.Logger().Errorf("Failed to initialize Lua plugin: %v", err)
+		plugin.L.Close()
+		return nil, fmt.Errorf("failed to initialize Lua plugin: %w", err)
+	}
+
+	return plugin, nil
+}
+
+func LoadLuaPlugin(pluginDir string) (*LuaPlugin, error) {
+	infoFile := filepath.Join(pluginDir, "info.json")
+	pluginInfo, err := utils.ReadFile(infoFile)
+	if err != nil {
+		return nil, err
+	}
+
+	var plugin *LuaPlugin
+	if err := json.Unmarshal(pluginInfo, &plugin); err != nil {
+		return nil, err
+	}
+
+	if plugin.Id == uuid.Nil {
+		return nil, fmt.Errorf("plugin ID is not set or is invalid")
+	}
+
+	if plugin.EntryPoint == "" || utils.FileExists(filepath.Join(pluginDir, plugin.EntryPoint)) == false {
+		return nil, fmt.Errorf("plugin entry point is not set or does not exist")
+	}
+
+	plugin.HttpClient = &http.Client{
+		Timeout: 5 * time.Second,
+	}
+	plugin.PluginDir = pluginDir
+	plugin.IsPacked = false
+	// TODO: Load settings
+	plugin.LuaEngine = LuaEngine{
+		L:    lua.NewState(),
+		uuid: plugin.Id,
+	}
+	luaEngineOptions := LuaEngineSetupOptions{
+		Context:       context.Background(),
+		ContextValues: map[string]interface{}{"plugin": &plugin},
+	}
+
+	if err := plugin.Setup(luaEngineOptions); err != nil {
+		return nil, err
+	}
+
+	scriptPath := filepath.Join(pluginDir, plugin.EntryPoint)
+	luaPlugin, err := loadPluginScriptFile(plugin.L, scriptPath)
+	if err != nil {
+		return nil, err
+	}
+	plugin.plugin = luaPlugin
+
+	return plugin, nil
+}
+
+func loadPluginScript(l *lua.LState, scriptContent string) (*lua.LTable, error) {
+	if err := l.DoString(scriptContent); err != nil {
+		return nil, fmt.Errorf("failed to load Lua script: %w", err)
+	}
+
+	val := l.Get(-1)
+	l.Pop(1)
+	if val.Type() != lua.LTTable {
+		return nil, fmt.Errorf("expected Lua table for plugin, got %s", val.Type().String())
+	}
+
+	return val.(*lua.LTable), nil
+}
+
+func loadPluginScriptFile(l *lua.LState, scriptPath string) (*lua.LTable, error) {
+	if err := l.DoFile(scriptPath); err != nil {
+		return nil, fmt.Errorf("failed to load Lua script %s: %w", scriptPath, err)
+	}
+
+	val := l.Get(-1)
+	l.Pop(1)
+	if val.Type() != lua.LTTable {
+		return nil, fmt.Errorf("expected Lua table for plugin, got %s", val.Type().String())
+	}
+
+	return val.(*lua.LTable), nil
 }
 
 func (p *LuaPlugin) Logger() *log.Entry {
@@ -170,124 +315,32 @@ func (p *LuaPlugin) GetMods() (map[string]interface{}, error) {
 	return foundMods, nil
 }
 
-// LoadLuaPluginFromZip Loads a plugin using a zip with the custom extension ".tcplugin".
-func LoadLuaPluginFromZip(pluginZipPath string) (*LuaPlugin, error) {
-	files, err := utils.ReadFilesFromZip(pluginZipPath)
-	if err != nil {
-		return nil, err
+func (p *LuaPlugin) GetHttpClient() *http.Client {
+	if p.HttpClient == nil {
+		p.HttpClient = &http.Client{
+			Timeout: 5 * time.Second,
+		}
 	}
-
-	var plugin LuaPlugin
-	if err := json.Unmarshal(files["info.json"], &plugin); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal plugin info: %w", err)
-	}
-
-	if plugin.Id == uuid.Nil {
-		return nil, fmt.Errorf("plugin ID is not set or is invalid")
-	}
-
-	if plugin.EntryPoint == "" {
-		return nil, fmt.Errorf("plugin entry point is not set")
-	}
-
-	plugin.PluginDir = pluginZipPath
-	plugin.IsPacked = true
-	// TODO: Load settings
-	plugin.LuaEngine = LuaEngine{
-		L:    lua.NewState(),
-		uuid: plugin.Id,
-	}
-
-	if err := plugin.Setup(); err != nil {
-		return nil, fmt.Errorf("failed to setup Lua plugin: %w", err)
-	}
-
-	scriptFile, ok := files[plugin.EntryPoint]
-	if !ok {
-		return nil, fmt.Errorf("plugin entry point %s not found in zip", plugin.EntryPoint)
-	}
-	luaPlugin, err := loadPluginScript(plugin.L, string(scriptFile))
-	if err != nil {
-		return nil, fmt.Errorf("failed to load Lua plugin script: %w", err)
-	}
-
-	plugin.plugin = luaPlugin
-
-	if err := plugin.Initialize(); err != nil {
-		plugin.Logger().Errorf("Failed to initialize Lua plugin: %v", err)
-		plugin.L.Close()
-		return nil, fmt.Errorf("failed to initialize Lua plugin: %w", err)
-	}
-
-	return &plugin, nil
+	return p.HttpClient
 }
 
-func LoadLuaPlugin(pluginDir string) (*LuaPlugin, error) {
-	infoFile := filepath.Join(pluginDir, "info.json")
-	pluginInfo, err := utils.ReadFile(infoFile)
-	if err != nil {
-		return nil, err
+func GetLuaPlugin(L *lua.LState) *LuaPlugin {
+	if L == nil {
+		log.Error("Lua state is nil, cannot get LuaPlugin")
+		return nil
 	}
 
-	var plugin LuaPlugin
-	if err := json.Unmarshal(pluginInfo, &plugin); err != nil {
-		return nil, err
+	if L.Context() == nil {
+		return nil
 	}
 
-	if plugin.Id == uuid.Nil {
-		return nil, fmt.Errorf("plugin ID is not set or is invalid")
+	if v := L.Context().Value("plugin"); v != nil {
+		if plugin, ok := v.(*LuaPlugin); ok {
+			return plugin
+		}
+		L.RaiseError("context value 'plugin' is not a LuaPlugin")
+	} else {
+		L.RaiseError("context value 'plugin' is nil")
 	}
-
-	if plugin.EntryPoint == "" || utils.FileExists(filepath.Join(pluginDir, plugin.EntryPoint)) == false {
-		return nil, fmt.Errorf("plugin entry point is not set or does not exist")
-	}
-
-	plugin.PluginDir = pluginDir
-	plugin.IsPacked = false
-	// TODO: Load settings
-	plugin.LuaEngine = LuaEngine{
-		L:    lua.NewState(),
-		uuid: plugin.Id,
-	}
-
-	if err := plugin.Setup(); err != nil {
-		return nil, err
-	}
-
-	scriptPath := filepath.Join(pluginDir, plugin.EntryPoint)
-	luaPlugin, err := loadPluginScriptFile(plugin.L, scriptPath)
-	if err != nil {
-		return nil, err
-	}
-	plugin.plugin = luaPlugin
-
-	return &plugin, nil
-}
-
-func loadPluginScript(l *lua.LState, scriptContent string) (*lua.LTable, error) {
-	if err := l.DoString(scriptContent); err != nil {
-		return nil, fmt.Errorf("failed to load Lua script: %w", err)
-	}
-
-	val := l.Get(-1)
-	l.Pop(1)
-	if val.Type() != lua.LTTable {
-		return nil, fmt.Errorf("expected Lua table for plugin, got %s", val.Type().String())
-	}
-
-	return val.(*lua.LTable), nil
-}
-
-func loadPluginScriptFile(l *lua.LState, scriptPath string) (*lua.LTable, error) {
-	if err := l.DoFile(scriptPath); err != nil {
-		return nil, fmt.Errorf("failed to load Lua script %s: %w", scriptPath, err)
-	}
-
-	val := l.Get(-1)
-	l.Pop(1)
-	if val.Type() != lua.LTTable {
-		return nil, fmt.Errorf("expected Lua table for plugin, got %s", val.Type().String())
-	}
-
-	return val.(*lua.LTable), nil
+	return nil
 }

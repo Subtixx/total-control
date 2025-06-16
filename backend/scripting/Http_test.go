@@ -6,11 +6,15 @@ import (
 	"testing"
 )
 
-func TestLuaHttpGet(t *testing.T) {
+func SetupHttpTests() *lua.LState {
 	L := lua.NewState()
 	LuaRegisterHttpObject(L)
+	return L
+}
+
+func TestLuaHttpGet(t *testing.T) {
+	L := SetupHttpTests()
 	defer L.Close()
-	// Register your http.get function here if needed
 
 	script := `
 		local res, err = http.get("https://httpbin.org/get")
@@ -26,8 +30,7 @@ func TestLuaHttpGet(t *testing.T) {
 }
 
 func TestLuaHttpPost(t *testing.T) {
-	L := lua.NewState()
-	LuaRegisterHttpObject(L)
+	L := SetupHttpTests()
 	defer L.Close()
 
 	script := `
@@ -44,8 +47,7 @@ func TestLuaHttpPost(t *testing.T) {
 }
 
 func TestLuaHttpDownload(t *testing.T) {
-	L := lua.NewState()
-	LuaRegisterHttpObject(L)
+	L := SetupHttpTests()
 	defer L.Close()
 
 	script := `

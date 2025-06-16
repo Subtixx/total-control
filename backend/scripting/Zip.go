@@ -1,6 +1,7 @@
 package scripting
 
 import (
+	"TotalControl/backend/plugins"
 	"TotalControl/backend/utils"
 	lua "github.com/yuin/gopher-lua"
 )
@@ -13,6 +14,19 @@ func LuaRegisterZipObject(l *lua.LState) {
 }
 
 func LuaReadFilesFromZip(L *lua.LState) int {
+	luaPlugin := GetLuaPlugin(L)
+	if luaPlugin == nil {
+		L.Push(lua.LNil)
+		L.Push(lua.LString(ErrPluginNotFound))
+		return 2
+	}
+
+	if !luaPlugin.CanAccessFileSystem() {
+		L.Push(lua.LNil)
+		L.Push(lua.LString(plugins.ErrFileSystemAccessDenied))
+		return 2
+	}
+
 	zipPath := L.ToString(1)
 	if zipPath == "" {
 		L.Push(lua.LNil)

@@ -89,14 +89,9 @@ func (p *Plugin) Pack() error {
 // ToString returns a string representation of the Plugin.
 func (p *Plugin) ToString() string {
 	return "Plugin{" +
-		"\n\tId: " + p.Id.String() +
-		"\n\tAuthor: " + p.Author +
-		"\n\tName: " + p.Name +
-		"\n\tDescription: " + p.Description +
-		"\n\tVersion: " + p.Version +
-		"\n\tEntryPoint: " + p.EntryPoint +
 		"\n\tPluginDir: " + p.PluginDir +
 		"\n\tIsPacked: " + utils.BoolToString(p.IsPacked) +
 		"\n\tEnabled: " + utils.BoolToString(p.Enabled) +
+		"\n\tInfo: " + p.PluginInfo.ToString() +
 		"\n}"
 }

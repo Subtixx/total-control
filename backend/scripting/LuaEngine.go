@@ -21,13 +21,21 @@ type LuaEngine struct {
 	Cache *utils.Cache
 }
 
+type LuaEngineSetupOptions struct {
+	Context       context.Context
+	ContextValues map[string]interface{}
+}
+
 func NewLuaEngine(luaEngineId uuid.UUID) (*LuaEngine, error) {
 	L := lua.NewState()
 	engine := &LuaEngine{
 		L:    L,
 		uuid: luaEngineId,
 	}
-	err := engine.Setup()
+	err := engine.Setup(LuaEngineSetupOptions{
+		Context:       context.Background(),
+		ContextValues: nil,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -50,14 +58,31 @@ func (l *LuaEngine) Logger() *log.Entry {
 	})
 }
 
-func (l *LuaEngine) Setup() error {
-	if err := l.setupContext(); err != nil {
+func (l *LuaEngine) Setup(options LuaEngineSetupOptions) error {
+	if err := l.setupContext(options); err != nil {
 		return err
 	}
 	if err := l.setupCache(); err != nil {
 		return err
 	}
-	l.L.OpenLibs() // This could be really bad if we allow all libraries!
+	//l.L.OpenLibs()
+	libsToLoad := []string{ // This could be really bad if we allow all libraries!
+		lua.LoadLibName,
+		lua.BaseLibName,
+		lua.TabLibName,
+		lua.IoLibName,
+		lua.OsLibName,
+		lua.StringLibName,
+		lua.MathLibName,
+		lua.DebugLibName,
+		lua.ChannelLibName,
+		lua.CoroutineLibName,
+	}
+	err := LoadBuiltinLibs(l.L, libsToLoad)
+	if err != nil {
+		return err
+	}
+
 	l.registerGlobals()
 	if err := LoadLibs(l.L); err != nil {
 		l.Logger().Errorf("Failed to load Lua libraries: %v", err)
@@ -69,11 +94,16 @@ func (l *LuaEngine) Setup() error {
 }
 
 // setupContext sets the LuaEngine context
-func (l *LuaEngine) setupContext() error {
+func (l *LuaEngine) setupContext(options LuaEngineSetupOptions) error {
 	if l.uuid == uuid.Nil {
 		return errors.New("LuaEngine UUID cannot be nil")
 	}
-	ctx := context.WithValue(context.Background(), "luaengine", l)
+	ctx := context.WithValue(options.Context, "luaengine", l)
+	if options.ContextValues != nil {
+		for key, value := range options.ContextValues {
+			ctx = context.WithValue(ctx, key, value)
+		}
+	}
 	l.L.SetContext(ctx)
 	return nil
 }

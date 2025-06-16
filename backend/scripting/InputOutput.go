@@ -1,6 +1,7 @@
 package scripting
 
 import (
+	"TotalControl/backend/plugins"
 	"TotalControl/backend/utils"
 	lua "github.com/yuin/gopher-lua"
 	"os"
@@ -8,6 +9,19 @@ import (
 )
 
 func LuaGetFilesInDirectory(L *lua.LState) int {
+	luaPlugin := GetLuaPlugin(L)
+	if luaPlugin == nil {
+		L.Push(lua.LNil)
+		L.Push(lua.LString(ErrPluginNotFound))
+		return 2
+	}
+
+	if !luaPlugin.CanAccessFileSystem() {
+		L.Push(lua.LNil)
+		L.Push(lua.LString(plugins.ErrFileSystemAccessDenied))
+		return 2
+	}
+
 	dir := L.ToString(1)
 	patterns := make([]string, 0)
 
@@ -41,6 +55,19 @@ func LuaGetFilesInDirectory(L *lua.LState) int {
 }
 
 func LuaGetFileName(L *lua.LState) int {
+	luaPlugin := GetLuaPlugin(L)
+	if luaPlugin == nil {
+		L.Push(lua.LNil)
+		L.Push(lua.LString(ErrPluginNotFound))
+		return 2
+	}
+
+	if !luaPlugin.CanAccessFileSystem() {
+		L.Push(lua.LNil)
+		L.Push(lua.LString(plugins.ErrFileSystemAccessDenied))
+		return 2
+	}
+
 	filePath := L.ToString(1)
 	if filePath == "" {
 		L.Push(lua.LNil)
@@ -53,6 +80,19 @@ func LuaGetFileName(L *lua.LState) int {
 }
 
 func LuaGetFileContent(L *lua.LState) int {
+	luaPlugin := GetLuaPlugin(L)
+	if luaPlugin == nil {
+		L.Push(lua.LNil)
+		L.Push(lua.LString(ErrPluginNotFound))
+		return 2
+	}
+
+	if !luaPlugin.CanAccessFileSystem() {
+		L.Push(lua.LNil)
+		L.Push(lua.LString(plugins.ErrFileSystemAccessDenied))
+		return 2
+	}
+
 	filePath := L.ToString(1)
 	if filePath == "" {
 		L.Push(lua.LNil)

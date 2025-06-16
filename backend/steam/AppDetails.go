@@ -9,8 +9,8 @@ import (
 	"net/http"
 )
 
-func GetAppDetails(appID string) (*AppDetailsResponse, error) {
-	resp, err := http.Get("https://store.steampowered.com/api/appdetails?appids=" + appID)
+func GetAppDetails(httpClient *http.Client, appID string) (*AppDetailsResponse, error) {
+	resp, err := httpClient.Get("https://store.steampowered.com/api/appdetails?appids=" + appID)
 	if err != nil {
 		return nil, errors.New("failed to make request to Steam API")
 	}

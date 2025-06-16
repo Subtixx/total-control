@@ -18,7 +18,7 @@ func TestLuaGetAppDetails(t *testing.T) {
 	}
 	result := L.Get(-1)
 	if result.Type() != lua.LTTable {
-		t.Errorf("Expected a table, got %s", result.Type())
+		t.Errorf("Expected a table, got %s, %v", result.Type(), result)
 	} else {
 		t.Logf("Lua script executed successfully, result: %s", result.String())
 	}

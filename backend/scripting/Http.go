@@ -1,6 +1,7 @@
 package scripting
 
 import (
+	"TotalControl/backend/plugins"
 	"TotalControl/backend/utils"
 	"encoding/json"
 	"fmt"
@@ -10,7 +11,6 @@ import (
 	"net/http"
 	"os"
 	"strings"
-	"time"
 )
 
 func LuaRegisterHttpObject(L *lua.LState) {
@@ -26,6 +26,19 @@ func LuaRegisterHttpObject(L *lua.LState) {
 }
 
 func luaHttpGet(L *lua.LState) int {
+	var httpClient *http.Client
+	luaPlugin := GetLuaPlugin(L)
+	if luaPlugin != nil {
+		if !luaPlugin.CanAccessNetwork() {
+			L.Push(lua.LFalse)
+			L.Push(lua.LString(plugins.ErrNetworkAccessDenied))
+			return 2
+		}
+		httpClient = luaPlugin.GetHttpClient()
+	} else {
+		httpClient = http.DefaultClient
+	}
+
 	if L.GetTop() != 1 {
 		L.Push(lua.LFalse)
 		L.Push(lua.LString("Expected 1 argument: HttpRequest userdata or URL string"))
@@ -53,11 +66,9 @@ func luaHttpGet(L *lua.LState) int {
 		L.Push(lua.LString("Expected HttpRequest userdata or URL string"))
 		return 2
 	}
+
 	httpReq.Method = "GET"
-	client := &http.Client{
-		Timeout: 5 * time.Second,
-	}
-	httpResponse, err := client.Do(httpReq)
+	httpResponse, err := httpClient.Do(httpReq)
 	if err != nil {
 		log.Errorf("HTTP GET request failed: %v", err)
 		L.Push(lua.LFalse)
@@ -70,6 +81,19 @@ func luaHttpGet(L *lua.LState) int {
 }
 
 func luaHttpPost(L *lua.LState) int {
+	var httpClient *http.Client
+	luaPlugin := GetLuaPlugin(L)
+	if luaPlugin != nil {
+		if !luaPlugin.CanAccessNetwork() {
+			L.Push(lua.LFalse)
+			L.Push(lua.LString(plugins.ErrNetworkAccessDenied))
+			return 2
+		}
+		httpClient = luaPlugin.GetHttpClient()
+	} else {
+		httpClient = http.DefaultClient
+	}
+
 	if L.GetTop() < 1 {
 		L.Push(lua.LFalse)
 		L.Push(lua.LString("Expected at least 1 argument: URL string/HttpRequest and optional body table"))
@@ -113,11 +137,9 @@ func luaHttpPost(L *lua.LState) int {
 		L.Push(lua.LString("Expected HttpRequest userdata"))
 		return 2
 	}
+
 	httpReq.Method = "POST"
-	client := &http.Client{
-		Timeout: 5 * time.Second,
-	}
-	httpResponse, err := client.Do(httpReq)
+	httpResponse, err := httpClient.Do(httpReq)
 	if err != nil {
 		log.Errorf("HTTP POST request failed: %v", err)
 		L.Push(lua.LFalse)
@@ -134,6 +156,19 @@ func luaHttpPost(L *lua.LState) int {
 }
 
 func luaHttpDownloadFile(L *lua.LState) int {
+	var httpClient *http.Client
+	luaPlugin := GetLuaPlugin(L)
+	if luaPlugin != nil {
+		if !luaPlugin.CanAccessNetwork() {
+			L.Push(lua.LFalse)
+			L.Push(lua.LString(plugins.ErrNetworkAccessDenied))
+			return 2
+		}
+		httpClient = luaPlugin.GetHttpClient()
+	} else {
+		httpClient = http.DefaultClient
+	}
+
 	if L.GetTop() != 2 {
 		L.Push(lua.LFalse)
 		L.Push(lua.LString("Expected 2 arguments: URL string/HttpRequest and destination file path"))
@@ -163,10 +198,7 @@ func luaHttpDownloadFile(L *lua.LState) int {
 		return 2
 	}
 
-	client := &http.Client{
-		Timeout: 5 * time.Second,
-	}
-	resp, err := client.Do(httpReq)
+	resp, err := httpClient.Do(httpReq)
 	if err != nil {
 		log.Errorf("HTTP request failed: %v", err)
 		L.Push(lua.LFalse)
