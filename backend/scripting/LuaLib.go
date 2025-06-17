@@ -39,15 +39,15 @@ func contains(slice []string, item string) bool {
 
 func LoadBuiltinLibs(L *lua.LState, libNames []string) error {
 	luaLibs := []luaLib{
-		{lua.LoadLibName, lua.OpenPackage},
-		{lua.BaseLibName, lua.OpenBase},
+		//{lua.LoadLibName, lua.OpenPackage},
+		//{lua.BaseLibName, lua.OpenBase},
 		{lua.TabLibName, lua.OpenTable},
-		{lua.IoLibName, lua.OpenIo},
-		{lua.OsLibName, lua.OpenOs},
+		//{lua.IoLibName, lua.OpenIo},
+		//{lua.OsLibName, lua.OpenOs},
 		{lua.StringLibName, lua.OpenString},
 		{lua.MathLibName, lua.OpenMath},
-		{lua.DebugLibName, lua.OpenDebug},
-		{lua.ChannelLibName, lua.OpenChannel},
+		//{lua.DebugLibName, lua.OpenDebug},
+		//{lua.ChannelLibName, lua.OpenChannel},
 		{lua.CoroutineLibName, lua.OpenCoroutine},
 	}
 
@@ -59,6 +59,13 @@ func LoadBuiltinLibs(L *lua.LState, libNames []string) error {
 		if err := loadBuiltinLib(L, lib.libName, lib.libFunc); err != nil {
 			return err
 		}
+	}
+
+	err := loadBuiltinLib(L, lua.OsLibName, func(L *lua.LState) int {
+		return lua.OpenOsBlacklist(L, "setlocale", "setenv", "remove", "rename")
+	})
+	if err != nil {
+		return err
 	}
 
 	return nil
