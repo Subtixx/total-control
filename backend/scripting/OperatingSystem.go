@@ -6,6 +6,34 @@ import (
 	lua "github.com/yuin/gopher-lua"
 )
 
+func LuaExtendOsTable(l *lua.LState) {
+	osTable := l.GetGlobal("os")
+	tbl, ok := osTable.(*lua.LTable)
+	if !ok {
+		log.Warnf("os table not found, creating a new one")
+		tbl = l.NewTable()
+		l.SetGlobal("os", tbl)
+	}
+	l.SetField(tbl, "getOperatingSystem", l.NewFunction(luaGetOperatingSystem))
+	l.SetField(tbl, "isWindows", l.NewFunction(luaIsWindows))
+	l.SetField(tbl, "isLinux", l.NewFunction(luaIsLinux))
+	l.SetField(tbl, "isMac", l.NewFunction(luaIsMac))
+	l.SetField(tbl, "is_unknown", lua.LFalse)
+	l.SetField(tbl, "is_windows", lua.LFalse)
+	l.SetField(tbl, "is_linux", lua.LFalse)
+	l.SetField(tbl, "is_mac", lua.LFalse)
+	switch utils.GetOperatingSystem() {
+	case utils.OperatingSystemWindows:
+		l.SetField(tbl, "is_windows", lua.LTrue)
+	case utils.OperatingSystemLinux:
+		l.SetField(tbl, "is_linux", lua.LTrue)
+	case utils.OperatingSystemMac:
+		l.SetField(tbl, "is_mac", lua.LTrue)
+	default:
+		l.SetField(tbl, "is_unknown", lua.LTrue)
+	}
+}
+
 func luaGetOperatingSystem(L *lua.LState) int {
 	// 1 - Windows, 2 - Linux, 3 - Mac, 0 - Unknown
 	switch utils.GetOperatingSystem() {
@@ -52,32 +80,4 @@ func luaIsMac(L *lua.LState) int {
 		L.Push(lua.LFalse)
 	}
 	return 1
-}
-
-func LuaExtendOsTable(l *lua.LState) {
-	osTable := l.GetGlobal("os")
-	tbl, ok := osTable.(*lua.LTable)
-	if !ok {
-		log.Warnf("os table not found, creating a new one")
-		tbl = l.NewTable()
-		l.SetGlobal("os", tbl)
-	}
-	l.SetField(tbl, "getOperatingSystem", l.NewFunction(luaGetOperatingSystem))
-	l.SetField(tbl, "isWindows", l.NewFunction(luaIsWindows))
-	l.SetField(tbl, "isLinux", l.NewFunction(luaIsLinux))
-	l.SetField(tbl, "isMac", l.NewFunction(luaIsMac))
-	l.SetField(tbl, "is_unknown", lua.LFalse)
-	l.SetField(tbl, "is_windows", lua.LFalse)
-	l.SetField(tbl, "is_linux", lua.LFalse)
-	l.SetField(tbl, "is_mac", lua.LFalse)
-	switch utils.GetOperatingSystem() {
-	case utils.OperatingSystemWindows:
-		l.SetField(tbl, "is_windows", lua.LTrue)
-	case utils.OperatingSystemLinux:
-		l.SetField(tbl, "is_linux", lua.LTrue)
-	case utils.OperatingSystemMac:
-		l.SetField(tbl, "is_mac", lua.LTrue)
-	default:
-		l.SetField(tbl, "is_unknown", lua.LTrue)
-	}
 }
