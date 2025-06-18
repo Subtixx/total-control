@@ -101,6 +101,7 @@ func (c *Cache) Set(key string, value interface{}, expiration int) error {
 		Value:      value,
 		Expiration: expireTime,
 	}
+
 	c.Logger().Debugf("Key %s set to %s, expires %d", key, value, expireTime)
 	return nil
 }

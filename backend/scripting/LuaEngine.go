@@ -158,6 +158,7 @@ func (l *LuaEngine) registerObjects() {
 	LuaRegisterRegExObject(l.L)
 	LuaRegisterHttpObject(l.L)
 	LuaRegisterCacheObject(l.L)
+	LuaRegisterSettingsObject(l.L)
 	LuaRegisterZipObject(l.L)
 
 	LuaExtendTableObject(l.L)

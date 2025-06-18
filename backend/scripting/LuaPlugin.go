@@ -91,7 +91,6 @@ func LoadLuaPluginFromZip(pluginZipPath string) (*LuaPlugin, error) {
 	}
 	plugin.PluginDir = pluginZipPath
 	plugin.IsPacked = true
-	// TODO: Load settings
 	plugin.LuaEngine = LuaEngine{
 		L:    lua.NewState(),
 		uuid: plugin.Id,
@@ -150,7 +149,6 @@ func LoadLuaPlugin(pluginDir string) (*LuaPlugin, error) {
 	}
 	plugin.PluginDir = pluginDir
 	plugin.IsPacked = false
-	// TODO: Load settings
 	plugin.LuaEngine = LuaEngine{
 		L:    lua.NewState(),
 		uuid: plugin.Id,
