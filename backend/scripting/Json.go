@@ -3,6 +3,7 @@ package scripting
 import (
 	"TotalControl/backend/utils"
 	"encoding/json"
+	log "github.com/sirupsen/logrus"
 	lua "github.com/yuin/gopher-lua"
 )
 
@@ -14,8 +15,15 @@ func LuaRegisterJsonObject(l *lua.LState) {
 }
 
 func LuaJsonDecode(L *lua.LState) int {
-	jsonStr := L.ToString(1)
+	if L.GetTop() != 1 {
+		L.Push(lua.LNil)
+		log.Warn("LuaJsonDecode: Expected 1 argument, got none")
+		return 1
+	}
+
+	jsonStr := L.CheckString(1)
 	if jsonStr == "" {
+		log.Warn("LuaJsonDecode: Empty JSON string provided")
 		L.Push(lua.LNil)
 		return 1
 	}
@@ -23,6 +31,7 @@ func LuaJsonDecode(L *lua.LState) int {
 	var result map[string]interface{}
 	err := json.Unmarshal([]byte(jsonStr), &result)
 	if err != nil {
+		log.Errorf("Failed to decode JSON: %v", err)
 		L.Push(lua.LNil)
 		return 1
 	}
