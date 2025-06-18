@@ -14,11 +14,6 @@
     "save_game_management"
   ],
   "settings": {
-    "factorio_path": {
-      "type": "string",
-      "description": "The path to the Factorio installation directory.",
-      "default": null
-    },
     "mod_directory": {
       "type": "string",
       "description": "The directory where Factorio mods are stored.",

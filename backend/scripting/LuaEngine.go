@@ -134,10 +134,6 @@ func (l *LuaEngine) setupContext(options LuaEngineSetupOptions) error {
 
 // setupCache initializes the cache for the LuaEngine
 func (l *LuaEngine) setupCache() error {
-	err := utils.CreateDirectoryIfNotExists("plugins/.cache")
-	if err != nil {
-		log.Errorf("Failed to create cache directory: %v", err)
-	}
 	pluginAppDataPath := plugins.GetPluginAppDataPath(l.uuid)
 	l.Cache = utils.NewCache(path.Join(pluginAppDataPath, "cache.json"), l.uuid)
 	return nil

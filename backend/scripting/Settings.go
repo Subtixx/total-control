@@ -55,8 +55,19 @@ func luaSettingsSet(L *lua.LState) int {
 
 	key := L.ToString(1)
 	value := utils.FromLuaValue(L, L.Get(2))
+	isValid, err := luaPlugin.IsValid(key, value)
+	if !isValid {
+		if err != nil {
+			L.Push(lua.LFalse)
+			L.Push(lua.LString(err.Error()))
+			return 2
+		}
+		L.Push(lua.LFalse)
+		L.Push(lua.LString("Invalid value type for setting: " + key))
+		return 2
+	}
 
-	err := luaPlugin.Set(key, value)
+	err = luaPlugin.Set(key, value)
 	if err != nil {
 		L.Push(lua.LFalse)
 		L.Push(lua.LString(err.Error()))

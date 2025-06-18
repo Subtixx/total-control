@@ -38,7 +38,7 @@ function loadModsFromApi()
         log.warn("Empty response body from Factorio API.")
         return {}
     end
-    
+
     local jsonBody = json.decode(response.body)
     if jsonBody == nil then
         log.error("Failed to decode JSON response from Factorio API.")
@@ -79,8 +79,6 @@ function loadMods()
     print("Cache not found, loading mods from API...")
     return loadModsFromApi()
 end
-
-print(settings.get("factorio_path"))
 
 return {
     -- The first load of the plugins will be slower.
