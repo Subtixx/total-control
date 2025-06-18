@@ -4,12 +4,20 @@ package utils
 
 import (
 	"os"
+	"path/filepath"
 )
 
-func IsExecutable(file *os.File) bool {
-	executableExtensions := []string{".exe", ".bat", ".cmd", ".com", ".ps1"}
-	for _, ext := range executableExtensions {
-		if file.Name() == ext || file.Name()[len(file.Name())-len(ext):] == ext {
+var ExecutableExtensions = []string{".exe"}
+
+func IsExecutable(filePath string) bool {
+	fileInfo, err := os.Stat(filePath)
+	if err != nil {
+		return false
+	}
+
+	fileExt := filepath.Ext(fileInfo.Name())
+	for _, ext := range ExecutableExtensions {
+		if fileExt == ext {
 			return true
 		}
 	}

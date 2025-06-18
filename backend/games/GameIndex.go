@@ -83,18 +83,13 @@ func (g *GameIndex) DetectGameFromExecutableName(filePath string) (*Game, error)
 	}
 
 	for _, file := range files {
-		file, err := utils.NewFile(file)
-		if err != nil {
-			continue // Skip files that cannot be read
+		if !utils.IsExecutable(file) {
+			continue // Skip non-executable files
 		}
 
-		// Check if the file has a known executable extension
-		if file.IsExecutable() {
-			// This is a Windows executable, we can check the game index
-			gameEntry, err := g.GetGameEntryByExecutablePath(file.FileName)
-			if err == nil {
-				return NewGameFromIndexEntry(gameEntry), nil
-			}
+		gameEntry, err := g.GetGameEntryByExecutablePath(file)
+		if err == nil {
+			return NewGameFromIndexEntry(gameEntry), nil
 		}
 	}
 	return nil, errors.New("no game detected from executable name in " + filePath)

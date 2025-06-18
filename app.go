@@ -54,12 +54,44 @@ func (a *App) shutdown(ctx context.Context) {
 	// 在此处做一些资源释放的操作
 }
 
-func (a *App) GetInstalledPlugins() map[string]*scripting.LuaPlugin {
+func (a *App) GetInstalledPlugins() []*scripting.LuaPlugin {
 	pluginManager := GetPluginManager()
 	if pluginManager == nil {
 		return nil
 	}
-	return pluginManager.GetLoadedPlugins()
+
+	plugins := pluginManager.GetLoadedPlugins()
+	if plugins == nil {
+		return nil
+	}
+	installedPlugins := make([]*scripting.LuaPlugin, 0, len(plugins))
+	for _, plugin := range plugins {
+		if plugin == nil {
+			continue
+		}
+		installedPlugins = append(installedPlugins, plugin)
+	}
+	return installedPlugins
+}
+
+func (a *App) GetAvailablePlugins() []*scripting.LuaPlugin {
+	pluginManager := GetPluginManager()
+	if pluginManager == nil {
+		return nil
+	}
+
+	plugins := pluginManager.GetPluginRepository()
+	if plugins == nil {
+		return nil
+	}
+	availablePlugins := make([]*scripting.LuaPlugin, 0, len(plugins))
+	for _, plugin := range plugins {
+		if plugin == nil {
+			continue
+		}
+		availablePlugins = append(availablePlugins, plugin)
+	}
+	return availablePlugins
 }
 
 func (a *App) GetInstalledGames() []*games.Game {

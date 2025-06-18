@@ -26,7 +26,7 @@ type LuaPlugin struct {
 	plugins.Plugin
 	LuaEngine
 
-	HttpClient *http.Client
+	httpClient *http.Client
 	// -------------------------------
 	plugin *lua.LTable
 	// -------------------------------
@@ -86,7 +86,7 @@ func LoadLuaPluginFromZip(pluginZipPath string) (*LuaPlugin, error) {
 		return nil, fmt.Errorf("plugin entry point is not set")
 	}
 
-	plugin.HttpClient = &http.Client{
+	plugin.httpClient = &http.Client{
 		Timeout: 5 * time.Second,
 	}
 	plugin.PluginDir = pluginZipPath
@@ -144,7 +144,7 @@ func LoadLuaPlugin(pluginDir string) (*LuaPlugin, error) {
 		return nil, fmt.Errorf("plugin entry point is not set or does not exist")
 	}
 
-	plugin.HttpClient = &http.Client{
+	plugin.httpClient = &http.Client{
 		Timeout: 5 * time.Second,
 	}
 	plugin.PluginDir = pluginDir
@@ -323,12 +323,12 @@ func (p *LuaPlugin) GetMods() (map[string]interface{}, error) {
 }
 
 func (p *LuaPlugin) GetHttpClient() *http.Client {
-	if p.HttpClient == nil {
-		p.HttpClient = &http.Client{
+	if p.httpClient == nil {
+		p.httpClient = &http.Client{
 			Timeout: 5 * time.Second,
 		}
 	}
-	return p.HttpClient
+	return p.httpClient
 }
 
 func GetLuaHttpClient(L *lua.LState) *http.Client {

@@ -6,11 +6,10 @@ import (
 	"os"
 )
 
-func IsExecutable(file *os.File) bool {
-	// On Linux, we check the file permissions for executables
-	fileInfo, err := file.Stat()
+func IsExecutable(filePath string) bool {
+	fileInfo, err := os.Stat(filePath)
 	if err != nil {
-		return false // If we can't get file info, assume it's not executable
+		return false
 	}
 
 	// Check if the file is a regular file and has execute permissions

@@ -1,6 +1,7 @@
 package scripting
 
 import (
+	"TotalControl/backend/plugins"
 	"TotalControl/backend/utils"
 	"errors"
 	"fmt"
@@ -17,12 +18,30 @@ var (
 	ErrorInvalidPlugin = fmt.Errorf("invalid plugin format")
 )
 
+const defaultPluginRepositoryId = "1767017e-590a-40af-a18b-b036d744a766"
+const defaultPluginRepositoryUrl = "https://raw.githubusercontent.com/subtixx/total-control/main/plugins/repository.json"
+
 type PluginManager struct {
 	Plugins map[string]*LuaPlugin
+
+	pluginRepositories map[string]*plugins.PluginRepository
 }
 
 func (pm *PluginManager) GetLoadedPlugins() map[string]*LuaPlugin {
 	return pm.Plugins
+}
+
+func (pm *PluginManager) GetPluginRepository(id string) *plugins.PluginRepository {
+	if id == "" {
+		return pm.pluginRepositories[defaultPluginRepositoryId]
+	}
+
+	repository, exists := pm.pluginRepositories[id]
+	if !exists {
+		pm.Logger().Warnf("Plugin repository with ID '%s' not found", id)
+		return nil
+	}
+	return repository
 }
 
 func (pm *PluginManager) Logger() *log.Entry {
@@ -38,6 +57,18 @@ func NewPluginManager(pluginDir string) (*PluginManager, error) {
 	err := pm.LoadPlugins(pluginDir)
 	if err != nil {
 		return nil, err
+	}
+	pm.pluginRepositories = make(map[string]*plugins.PluginRepository)
+
+	// Add default plugin repositories
+	defaultPluginRepository, err := plugins.NewPluginRepository(
+		defaultPluginRepositoryId,
+		defaultPluginRepositoryUrl,
+	)
+	if err != nil {
+		pm.Logger().Errorf("Failed to load plugin repository: %v", err)
+	} else {
+		pm.pluginRepositories[defaultPluginRepository.Id] = defaultPluginRepository
 	}
 	return pm, nil
 }

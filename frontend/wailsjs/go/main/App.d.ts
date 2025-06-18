@@ -5,4 +5,4 @@ import {scripting} from '../models';
 
 export function GetInstalledGames():Promise<Array<games.Game>>;
 
-export function GetInstalledPlugins():Promise<Record<string, scripting.LuaPlugin>>;
+export function GetInstalledPlugins():Promise<Array<scripting.LuaPlugin>>;

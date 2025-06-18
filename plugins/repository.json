@@ -1,0 +1,11 @@
+{
+  "id": "1767017e-590a-40af-a18b-b036d744a766",
+  "url": "https://raw.githubusercontent.com/subtixx/total-control/main/plugins/repository.json",
+  "plugins": [
+    {
+      "name": "Factorio",
+      "version": "1.0.0",
+      "changelog": "Initial release"
+    }
+  ]
+}

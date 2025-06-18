@@ -3,6 +3,7 @@ package games
 import (
 	"TotalControl/backend/steam"
 	"TotalControl/backend/utils"
+	"net/http"
 )
 
 func (g *Game) FetchInfoFromSteam() error {
@@ -11,7 +12,9 @@ func (g *Game) FetchInfoFromSteam() error {
 		return nil // No Steam App ID, nothing to fetch
 	}
 
-	appInfo, err := steam.GetAppDetails(g.ExternalIDs.Steam)
+	httpClient := http.DefaultClient
+
+	appInfo, err := steam.GetAppDetails(httpClient, g.ExternalIDs.Steam)
 	if err != nil {
 		return err
 	}
