@@ -1,6 +1,7 @@
 package scripting
 
 import (
+	"TotalControl/backend/utils"
 	_ "embed"
 	lua "github.com/yuin/gopher-lua"
 )
@@ -28,15 +29,6 @@ func LoadLibs(L *lua.LState) error {
 	return nil
 }
 
-func contains(slice []string, item string) bool {
-	for _, v := range slice {
-		if v == item {
-			return true
-		}
-	}
-	return false
-}
-
 func LoadBuiltinLibs(L *lua.LState, libNames []string) error {
 	luaLibs := []luaLib{
 		//{lua.LoadLibName, lua.OpenPackage},
@@ -52,7 +44,7 @@ func LoadBuiltinLibs(L *lua.LState, libNames []string) error {
 	}
 
 	for _, lib := range luaLibs {
-		if !contains(libNames, lib.libName) {
+		if !utils.ArrayContains(libNames, lib.libName) {
 			continue
 		}
 
@@ -61,11 +53,13 @@ func LoadBuiltinLibs(L *lua.LState, libNames []string) error {
 		}
 	}
 
-	err := loadBuiltinLib(L, lua.OsLibName, func(L *lua.LState) int {
-		return lua.OpenOsBlacklist(L, "setlocale", "setenv", "remove", "rename")
-	})
-	if err != nil {
-		return err
+	if utils.ArrayContains(libNames, lua.OsLibName) {
+		err := loadBuiltinLib(L, lua.OsLibName, func(L *lua.LState) int {
+			return lua.OpenOsBlacklist(L, "setlocale", "setenv", "remove", "rename")
+		})
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
