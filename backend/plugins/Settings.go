@@ -7,6 +7,13 @@ import (
 	"path"
 )
 
+var (
+	ErrSettingNotFound    = fmt.Errorf("setting not found")
+	ErrSettingValueNotSet = fmt.Errorf("setting value not set")
+	ErrSettingInvalid     = fmt.Errorf("setting value is invalid")
+	ErrValueTypeMismatch  = fmt.Errorf("value type does not match setting type")
+)
+
 type SettingDefinition struct {
 	Type        string `json:"type"`
 	Description string `json:"description"`
@@ -43,11 +50,11 @@ func (p *Plugin) Set(key string, value interface{}) error {
 	setting, exists := p.SettingDefinitions[key]
 	// Check if valid setting
 	if !exists {
-		return fmt.Errorf("setting %s does not exist", key)
+		return ErrSettingNotFound
 	}
 
 	if !setting.Accepts(value) {
-		return fmt.Errorf("value %v does not match type %s for setting %s", value, setting.Type, key)
+		return ErrValueTypeMismatch
 	}
 
 	p.Settings[key] = value
@@ -55,16 +62,38 @@ func (p *Plugin) Set(key string, value interface{}) error {
 }
 
 func (p *Plugin) Get(key string) (interface{}, error) {
+	if p.Settings == nil {
+		return nil, fmt.Errorf("settings not initialized")
+	}
+
+	_, exists := p.SettingDefinitions[key]
+	if !exists {
+		return nil, ErrSettingNotFound
+	}
 	value, exists := p.Settings[key]
 	if !exists {
-		return nil, fmt.Errorf("setting %s does not exist", key)
+		return nil, ErrSettingValueNotSet
 	}
+
 	return value, nil
 }
 
 func (p *Plugin) Has(key string) bool {
 	_, exists := p.Settings[key]
 	return exists
+}
+
+func (p *Plugin) IsValid(key string, value interface{}) (bool, error) {
+	setting, exists := p.SettingDefinitions[key]
+	if !exists {
+		return false, ErrSettingNotFound
+	}
+
+	if !setting.Accepts(value) {
+		return false, ErrValueTypeMismatch
+	}
+
+	return true, nil
 }
 
 func (p *Plugin) Save() error {
