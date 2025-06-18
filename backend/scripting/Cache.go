@@ -119,22 +119,8 @@ func luaCacheSet(L *lua.LState) int {
 
 	key := L.ToString(1)
 	value := L.Get(2)
-	var goValue interface{}
 
-	switch v := value.(type) {
-	case lua.LString:
-		goValue = string(v)
-	case lua.LNumber:
-		goValue = int(v)
-	case lua.LBool:
-		goValue = bool(v)
-	case *lua.LTable:
-		goValue = utils.LuaTableToMap(L, v)
-	default:
-		L.RaiseError("cache.set: unsupported value type")
-		return 0
-	}
-	log.Debugf("Setting cache key: %s, value: %v", key, goValue)
+	goValue := utils.FromLuaValue(L, value)
 
 	expiration := -1 // Default to no expiration
 	if L.GetTop() > 2 {
