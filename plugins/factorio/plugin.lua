@@ -24,7 +24,6 @@ function readModListFile(plugin)
 end
 
 function loadModsFromApi()
-
     -- Do Http requests to https://mods.factorio.com/api/mods
     local response = http.get("https://mods.factorio.com/api/mods")
     if response == nil then
@@ -35,10 +34,31 @@ function loadModsFromApi()
         log.error("Failed to fetch mods from Factorio API: " .. response.status_code)
         return {}
     end
+    if response.body == "" then
+        log.warn("Empty response body from Factorio API.")
+        return {}
+    end
+    
+    local jsonBody = json.decode(response.body)
+    if jsonBody == nil then
+        log.error("Failed to decode JSON response from Factorio API.")
+        return {}
+    end
 
-    local pagination = response.body.pagination
-    local results = response.body.results
-    print(serpent.block(response.body))
+    --print("Response Body: " .. serpent.block(response.body))
+
+    local pagination = jsonBody.pagination
+    if pagination == nil or pagination.total == 0 then
+        log.warn("No mods found in the Factorio API response.")
+        return {}
+    end
+
+    local results = jsonBody.results
+    if results == nil or #results == 0 then
+        log.warn("No mods found in the Factorio API response results.")
+        return {}
+    end
+
     cache.set("factorio_mods", {
         pagination = pagination,
         results = results,
@@ -59,6 +79,8 @@ function loadMods()
     print("Cache not found, loading mods from API...")
     return loadModsFromApi()
 end
+
+print(settings.get("factorio_path"))
 
 return {
     -- The first load of the plugins will be slower.
