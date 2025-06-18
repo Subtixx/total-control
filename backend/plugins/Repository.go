@@ -16,6 +16,9 @@ var (
 	ErrFetchRepositoryFailed = errors.New("failed to fetch plugin repository: status code not OK")
 )
 
+const DefaultPluginRepositoryId = "1767017e-590a-40af-a18b-b036d744a766"
+const DefaultPluginRepositoryUrl = "https://raw.githubusercontent.com/subtixx/total-control/main/plugins/repository.json"
+
 type PluginRepositoryInfo struct {
 	Name      string `json:"name"`
 	Version   string `json:"version"`
@@ -26,6 +29,10 @@ type PluginRepository struct {
 	Id      string                  `json:"id"`
 	Url     string                  `json:"url"`
 	Plugins []*PluginRepositoryInfo `json:"plugins"`
+}
+
+func NewDefaultPluginRepository() (*PluginRepository, error) {
+	return NewPluginRepository(DefaultPluginRepositoryId, DefaultPluginRepositoryUrl)
 }
 
 func NewPluginRepository(id string, url string) (*PluginRepository, error) {
@@ -69,7 +76,7 @@ func NewPluginRepository(id string, url string) (*PluginRepository, error) {
 	var repository PluginRepository
 	repository.Id = id
 	repository.Url = url
-	err = json.Unmarshal(jsonData, &repository.Plugins)
+	err = json.Unmarshal(jsonData, &repository)
 	if err != nil {
 		return nil, err
 	}

@@ -3,6 +3,7 @@ package utils
 import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
+	"runtime/debug"
 	"strings"
 )
 
@@ -129,6 +130,12 @@ func (f *CustomFormatter) Format(entry *log.Entry) ([]byte, error) {
 		formattedText = strings.Join(prefixes, " ") + " " + entry.Message + "\n" + fmt.Sprintf("  Caller: %s\n", caller)
 	} else {
 		formattedText = strings.Join(prefixes, " ") + " " + entry.Message + "\n"
+	}
+
+	// if error always append stacktrace
+	if entry.Level == log.ErrorLevel || entry.Level == log.FatalLevel || entry.Level == log.PanicLevel {
+		stackTrace := debug.Stack()
+		formattedText += fmt.Sprintf("  Stack trace:\n%s\n", stackTrace)
 	}
 
 	return []byte(
