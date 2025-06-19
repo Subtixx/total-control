@@ -3,7 +3,8 @@ import HomeView from "@views/HomeView.vue";
 import AddGameView from "@views/AddGameView.vue";
 import GameDetailsView from "@views/GameDetailsView.vue";
 import SettingsView from "@views/SettingsView.vue";
-import PluginsView from "@views/PluginsView.vue";
+import PluginsView from "@views/plugins/PluginsView.vue";
+import PluginManagerSettings from "@views/plugins/PluginManagerSettings.vue";
 import NotFoundView from "@views/NotFoundView.vue";
 
 const router = createRouter({
@@ -33,6 +34,11 @@ const router = createRouter({
             path: "/plugins",
             name: "Plugins",
             component: PluginsView,
+        },
+        {
+            path: "/plugins/settings",
+            name: "PluginManagerSettings",
+            component: PluginManagerSettings,
         },
         {
             path: "/:pathMatch(.*)*",

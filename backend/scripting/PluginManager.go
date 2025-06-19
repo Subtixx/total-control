@@ -133,3 +133,13 @@ func (pm *PluginManager) Shutdown() {
 	pm.Plugins = make(map[string]*LuaPlugin) // Clear loaded plugins
 	pm.Logger().Debug("All plugins have been shut down and cleared from memory.")
 }
+
+func (pm *PluginManager) GetPluginRepositories() []*plugins.PluginRepository {
+	repositories := make([]*plugins.PluginRepository, 0, len(pm.pluginRepositories))
+	for _, repo := range pm.pluginRepositories {
+		if repo != nil {
+			repositories = append(repositories, repo)
+		}
+	}
+	return repositories
+}

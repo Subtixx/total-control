@@ -12,7 +12,8 @@
         "noUncheckedSideEffectImports": true,
         "types": [
             "vite/client",
-            "unplugin-icons/types/vue"
+            "unplugin-icons/types/vue",
+            "vue3-toastify/global"
         ],
         "typeRoots": [
             "./node_modules/@types",

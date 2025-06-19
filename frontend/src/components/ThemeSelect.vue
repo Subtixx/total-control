@@ -1,66 +1,33 @@
 <script setup lang="ts">
-
-import {onMounted, ref, type Ref} from "vue";
-
-let availableThemes = [
-    "light",
-    "dark",
-    "cupcake",
-    "bumblebee",
-    "emerald",
-    "corporate",
-    "synthwave",
-    "retro",
-    "cyberpunk",
-    "valentine",
-    "halloween",
-    "garden",
-    "forest",
-    "aqua",
-    "lofi",
-    "pastel",
-    "fantasy",
-    "wireframe",
-    "black",
-    "luxury",
-    "dracula",
-    "cmyk",
-    "autumn",
-    "business",
-    "acid",
-    "lemonade",
-    "night",
-    "coffee",
-    "winter",
-    "dim",
-    "nord",
-    "sunset",
-    "caramellatte",
-    "abyss",
-    "silk"
-];
+import {onMounted, ref, type Ref, watch} from "vue";
+import {useTheme} from "@/themePlugin.ts";
 
 const activeTheme: Ref<string | null> = ref(null);
+
+const theme = useTheme();
 onMounted(() => {
-    activeTheme.value = localStorage.getItem('theme') || 'system';
-    setTheme(activeTheme.value);
+    activeTheme.value = theme.theme.value;
 });
 
-const setTheme = (theme: string) => {
-    if (theme === 'system') {
-        theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+watch(activeTheme, (newTheme) => {
+    if (newTheme === 'system') {
+        theme.setSystemTheme();
+        return
     }
-    document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('theme', theme);
-};
+    if (!newTheme) {
+        return;
+    }
+
+    theme.setTheme(newTheme);
+});
 </script>
 
 <template>
     <select
         class="select w-full"
-        @change="setTheme($event?.target?.value)">
+        v-model="activeTheme">
         <option
-            v-for="theme in availableThemes"
+            v-for="theme in theme.availableThemes"
             :selected="activeTheme === theme"
             :key="theme"
             :value="theme">

@@ -2,6 +2,7 @@ package main
 
 import (
 	"TotalControl/backend/games"
+	"TotalControl/backend/plugins"
 	"TotalControl/backend/scripting"
 	"context"
 	"github.com/wailsapp/wails/v2/pkg/options"
@@ -60,12 +61,12 @@ func (a *App) GetInstalledPlugins() []*scripting.LuaPlugin {
 		return nil
 	}
 
-	plugins := pluginManager.GetLoadedPlugins()
-	if plugins == nil {
+	loadedPlugins := pluginManager.GetLoadedPlugins()
+	if loadedPlugins == nil {
 		return nil
 	}
-	installedPlugins := make([]*scripting.LuaPlugin, 0, len(plugins))
-	for _, plugin := range plugins {
+	installedPlugins := make([]*scripting.LuaPlugin, 0, len(loadedPlugins))
+	for _, plugin := range loadedPlugins {
 		if plugin == nil {
 			continue
 		}
@@ -74,24 +75,33 @@ func (a *App) GetInstalledPlugins() []*scripting.LuaPlugin {
 	return installedPlugins
 }
 
-func (a *App) GetAvailablePlugins() []*scripting.LuaPlugin {
+func (a *App) GetAvailablePlugins() []*plugins.PluginRepositoryInfo {
 	pluginManager := GetPluginManager()
 	if pluginManager == nil {
 		return nil
 	}
 
-	plugins := pluginManager.GetPluginRepository()
-	if plugins == nil {
+	pluginRepository := pluginManager.GetPluginRepository(plugins.DefaultPluginRepositoryId)
+	if pluginRepository == nil {
 		return nil
 	}
-	availablePlugins := make([]*scripting.LuaPlugin, 0, len(plugins))
-	for _, plugin := range plugins {
+	availablePlugins := make([]*plugins.PluginRepositoryInfo, 0, len(pluginRepository.Plugins))
+	for _, plugin := range pluginRepository.Plugins {
 		if plugin == nil {
 			continue
 		}
 		availablePlugins = append(availablePlugins, plugin)
 	}
 	return availablePlugins
+}
+
+func (a *App) GetPluginRepositories() []*plugins.PluginRepository {
+	pluginManager := GetPluginManager()
+	if pluginManager == nil {
+		return nil
+	}
+
+	return pluginManager.GetPluginRepositories()
 }
 
 func (a *App) GetInstalledGames() []*games.Game {

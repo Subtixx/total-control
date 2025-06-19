@@ -20,9 +20,12 @@ const DefaultPluginRepositoryId = "1767017e-590a-40af-a18b-b036d744a766"
 const DefaultPluginRepositoryUrl = "https://raw.githubusercontent.com/subtixx/total-control/main/plugins/repository.json"
 
 type PluginRepositoryInfo struct {
-	Name      string `json:"name"`
-	Version   string `json:"version"`
-	Changelog string `json:"changelog"`
+	Id          string `json:"id"`
+	Name        string `json:"name"`
+	Author      string `json:"author"`
+	Description string `json:"description"`
+	Version     string `json:"version"`
+	Changelog   string `json:"changelog"`
 }
 
 type PluginRepository struct {

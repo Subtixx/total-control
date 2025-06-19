@@ -1,4 +1,57 @@
 @import "tailwindcss";
+
 @plugin "daisyui" {
     themes: all
+}
+
+:root {
+    --toastify-color-light: var(--color-base-100);
+    --toastify-color-dark: #121212;
+    --toastify-color-info: var(--color-info);
+    --toastify-color-success: var(--color-success);
+    --toastify-color-warning: var(--color-warning);
+    --toastify-color-error: var(--color-error);
+    --toastify-color-transparent: var(--color-base-100);
+
+    --toastify-icon-color-info: var(--toastify-color-info);
+    --toastify-icon-color-success: var(--toastify-color-success);
+    --toastify-icon-color-warning: var(--toastify-color-warning);
+    --toastify-icon-color-error: var(--toastify-color-error);
+
+    --toastify-toast-background: #fff;
+
+    --toastify-text-color-light: var(--color-base-content);
+    --toastify-text-color-dark: var(--color-base-content);
+
+    --toastify-text-color-success: var(--toastify-color-success);
+    --toastify-text-color-warning: var(--toastify-color-warning);
+    --toastify-text-color-error: var(--toastify-color-error);
+
+    --toastify-spinner-color: var(--color-base-content);
+    --toastify-spinner-color-empty-area: var(--color-base-200);
+
+    --toastify-color-progress-light: var(--color-primary);
+    --toastify-color-progress-dark: var(--color-primary);
+    --toastify-color-progress-info: var(--toastify-color-info);
+    --toastify-color-progress-success: var(--toastify-color-success);
+    --toastify-color-progress-warning: var(--toastify-color-warning);
+    --toastify-color-progress-error: var(--toastify-color-error);
+}
+
+.Toastify__close-button,
+.Toastify__close-button-light {
+    color: var(--toastify-text-color-light);
+}
+
+.Toastify__toast-theme--colored.Toastify__toast--default, .Toastify__toast-theme--light {
+    @apply border border-base-300;
+}
+
+@layer utilities {
+    .tooltip {
+        & > :where(.tooltip-content), &:where([data-tip])::before {
+            max-width: 8rem;
+            word-wrap: normal;
+        }
+    }
 }

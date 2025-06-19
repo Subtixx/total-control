@@ -155,7 +155,7 @@ export const useGamesStore = defineStore('games', {
             try {
                 const response = await new Promise<Game[]>(resolve => {
                     setTimeout(() => {
-                        resolve(games);
+                        resolve([]);
                     }, 1000);
                 });
 
@@ -175,7 +175,7 @@ export const useGamesStore = defineStore('games', {
             try {
                 const response = await new Promise<Game[]>(resolve => {
                     setTimeout(() => {
-                        resolve(games.slice(0, 2)); // Assume the first two are recent
+                        resolve([]); // Assume the first two are recent
                     }, 1000);
                 });
 
@@ -206,7 +206,7 @@ export const useGamesStore = defineStore('games', {
 
             // For now, we simulate fetching a game by ID with a timeout
             try {
-                const game = games.find(g => g.id === id) || null;
+                const game = this.games.find(g => g.id === id) || null;
                 if (game) {
                     return await new Promise<Game>(resolve => {
                         setTimeout(() => resolve(game), 500);
@@ -229,7 +229,7 @@ export const useGamesStore = defineStore('games', {
 
             // For now, we simulate detecting a game with a timeout
             try {
-                const game = games.find(g => g.slug === path.split('/').pop()) || null;
+                const game = this.games.find(g => g.slug === path.split('/').pop()) || null;
                 if (game) {
                     return await new Promise<Game>(resolve => {
                         setTimeout(() => resolve(game), 500);
@@ -250,7 +250,7 @@ export const useGamesStore = defineStore('games', {
 
             // For now, we simulate searching games with a timeout
             try {
-                const results = games.filter(game => game.name.toLowerCase().includes(query.toLowerCase()));
+                const results = this.games.filter(game => game.name.toLowerCase().includes(query.toLowerCase()));
                 return await new Promise<Game[]>(resolve => {
                     setTimeout(() => resolve(results), 2000);
                 });

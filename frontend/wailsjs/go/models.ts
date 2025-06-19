@@ -74,6 +74,67 @@ export namespace games {
 
 }
 
+export namespace plugins {
+	
+	export class PluginRepositoryInfo {
+	    id: string;
+	    name: string;
+	    author: string;
+	    description: string;
+	    version: string;
+	    changelog: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new PluginRepositoryInfo(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.name = source["name"];
+	        this.author = source["author"];
+	        this.description = source["description"];
+	        this.version = source["version"];
+	        this.changelog = source["changelog"];
+	    }
+	}
+	export class PluginRepository {
+	    id: string;
+	    url: string;
+	    plugins: PluginRepositoryInfo[];
+	
+	    static createFrom(source: any = {}) {
+	        return new PluginRepository(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.url = source["url"];
+	        this.plugins = this.convertValues(source["plugins"], PluginRepositoryInfo);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+
+}
+
 export namespace scripting {
 	
 	export class LuaPlugin {
