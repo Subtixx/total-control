@@ -42,6 +42,15 @@ func GetCommonUserDataPath() string {
 	panic("Unsupported OS: " + GetOperatingSystem())
 }
 
+func GetAppCachePath() string {
+	appDataPath := GetAppDataPath()
+	cachePath := filepath.Join(appDataPath, ".cache")
+	if err := CreateDirectoryIfNotExists(cachePath); err != nil {
+		panic(err) // Handle error appropriately in production code
+	}
+	return cachePath
+}
+
 // GetAppDataPath returns the application data path for TotalControl.
 func GetAppDataPath() string {
 	// Get the user's home directory
