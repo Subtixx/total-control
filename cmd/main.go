@@ -41,7 +41,7 @@ func app() {
 	games := steam.GetInstalledGames(steamLibraries)
 	log.Infof("Found %d installed games", len(games))
 	for _, game := range games {
-		log.Infof("Game: %s (ID: %s)", game.AppState.Name, game.AppState.AppID)
+		log.Info(game.String())
 	}
 
 	/*
