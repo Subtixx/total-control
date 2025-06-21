@@ -118,3 +118,24 @@ func TestParseVDF_LibraryFoldersFile(t *testing.T) {
 		t.Errorf("did not find expected library folder path")
 	}
 }
+
+func TestParseACF_AppSchemaFile(t *testing.T) {
+	data, err := os.ReadFile("./data/appmanifest.acf")
+	if err != nil {
+		t.Fatalf("failed to read appmanifest_440.acf: %v", err)
+	}
+
+	root, err := ParseVDF(strings.NewReader(string(data)))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if root.Key != "AppState" {
+		t.Errorf("expected root key 'AppState', got '%s'", root.Key)
+	}
+	if len(root.Children) < 1 {
+		t.Errorf("expected at least 1 children, got %d", len(root.Children))
+	}
+	if root.Children[0].Key != "appid" {
+		t.Errorf("expected first child key 'appid', got '%s'", root.Children[0].Key)
+	}
+}
