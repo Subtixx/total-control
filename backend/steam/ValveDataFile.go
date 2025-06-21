@@ -2,89 +2,92 @@ package steam
 
 import (
 	"bufio"
-	"errors"
+	"bytes"
 	"io"
+	"os"
 	"strings"
 	"unicode"
 )
 
-// VDFNode represents a node in the VDF structure.
-type VDFNode struct {
-	Key      string
-	Value    string
-	Children []*VDFNode
+func ReadVDF(filePath string) (map[string]interface{}, error) {
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		return nil, err
+	}
+
+	return ParseVDF(data)
 }
 
-// ParseVDF parses a Valve Data File (VDF) from an io.Reader.
-func ParseVDF(r io.Reader) (*VDFNode, error) {
-	scanner := bufio.NewScanner(r)
-	var stack []*VDFNode
-	var root *VDFNode
+// ParseVDF parses a Valve Data Format (VDF) file and returns a map[string]interface{}.
+func ParseVDF(data []byte) (map[string]interface{}, error) {
+	reader := bufio.NewReader(bytes.NewReader(data))
+	return parseObject(reader)
+}
 
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
-		if line == "" || strings.HasPrefix(line, "//") {
-			continue
+func parseObject(r *bufio.Reader) (map[string]interface{}, error) {
+	result := make(map[string]interface{})
+	var key string
+	for {
+		token, err := readToken(r)
+		if err == io.EOF {
+			break
 		}
-		if line == "{" {
-			continue
-		}
-		if line == "}" {
-			if len(stack) > 1 {
-				stack = stack[:len(stack)-1]
-			}
-			continue
-		}
-		key, value, err := parseVDFLine(line)
 		if err != nil {
 			return nil, err
 		}
-		node := &VDFNode{Key: key, Value: value}
-		if len(stack) == 0 {
-			root = node
-			stack = append(stack, node)
-		} else {
-			parent := stack[len(stack)-1]
-			parent.Children = append(parent.Children, node)
-			if value == "" {
-				stack = append(stack, node)
+		if token == "}" {
+			break
+		}
+		key = token
+		token, err = readToken(r)
+		if err != nil {
+			return nil, err
+		}
+		if token == "{" {
+			val, err := parseObject(r)
+			if err != nil {
+				return nil, err
 			}
+			result[key] = val
+		} else {
+			result[key] = token
 		}
 	}
-	if err := scanner.Err(); err != nil {
-		return nil, err
-	}
-	return root, nil
+	return result, nil
 }
 
-func parseVDFLine(line string) (string, string, error) {
-	parts := splitVDFLine(line)
-	if len(parts) == 1 {
-		return parts[0], "", nil
-	}
-	if len(parts) == 2 {
-		return parts[0], parts[1], nil
-	}
-	return "", "", errors.New("invalid VDF line: " + line)
-}
-
-func splitVDFLine(line string) []string {
-	var parts []string
-	var inQuote bool
+func readToken(r *bufio.Reader) (string, error) {
 	var sb strings.Builder
-	for _, r := range line {
-		switch {
-		case r == '"':
-			inQuote = !inQuote
-			if !inQuote {
-				parts = append(parts, sb.String())
-				sb.Reset()
+	inQuotes := false
+	for {
+		ch, _, err := r.ReadRune()
+		if err != nil {
+			return "", err
+		}
+		if unicode.IsSpace(ch) && !inQuotes {
+			if sb.Len() > 0 {
+				break
 			}
-		case inQuote:
-			sb.WriteRune(r)
-		case unicode.IsSpace(r):
 			continue
 		}
+		if ch == '"' {
+			if inQuotes {
+				break
+			}
+			inQuotes = true
+			continue
+		}
+		if !inQuotes && (ch == '{' || ch == '}') {
+			if sb.Len() == 0 {
+				return string(ch), nil
+			}
+			err := r.UnreadRune()
+			if err != nil {
+				return "", err
+			}
+			break
+		}
+		sb.WriteRune(ch)
 	}
-	return parts
+	return sb.String(), nil
 }
