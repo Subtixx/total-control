@@ -43,18 +43,13 @@ func GetCache(L *lua.LState) *utils.Cache {
 }
 
 func luaCacheHasKey(L *lua.LState) int {
-	if L.GetTop() < 1 {
-		L.RaiseError("cache.has_key: key is required")
-		return 0
-	}
-
 	cache := GetCache(L)
 	if cache == nil {
 		L.RaiseError("cache.has_key: Cache not found in context")
 		return 0
 	}
 
-	key := L.ToString(1)
+	key := utils.GetString(L, 1)
 	if key == "" {
 		L.RaiseError("cache.has_key: key cannot be empty")
 		return 0
@@ -72,18 +67,13 @@ func luaCacheHasKey(L *lua.LState) int {
 
 // luaCacheGet retrieves a value from the cache by key.
 func luaCacheGet(L *lua.LState) int {
-	if L.GetTop() < 1 {
-		L.RaiseError("cache.get: key is required")
-		return 0
-	}
-
 	cache := GetCache(L)
 	if cache == nil {
 		L.RaiseError("cache.get: Cache not found in context")
 		return 0
 	}
 
-	key := L.ToString(1)
+	key := utils.GetString(L, 1)
 	if key == "" {
 		L.RaiseError("cache.get: key cannot be empty")
 		return 0
@@ -106,21 +96,22 @@ func luaCacheGet(L *lua.LState) int {
 
 // luaCacheSet sets a value in the cache with a key and optional expiration time.
 func luaCacheSet(L *lua.LState) int {
-	if L.GetTop() < 2 {
-		L.RaiseError("cache.set: at least key and value are required")
-		return 0
-	}
-
 	cache := GetCache(L)
 	if cache == nil {
 		L.RaiseError("cache.set: Cache not found in context")
 		return 0
 	}
 
-	key := L.ToString(1)
-	value := L.Get(2)
+	key := utils.GetString(L, 1)
+	if key == "" {
+		L.RaiseError("cache.set: key cannot be empty")
+		return 0
+	}
 
-	goValue := utils.FromLuaValue(L, value)
+	value := utils.GetFromLuaValue(L, 2)
+	if value == nil {
+		L.RaiseError("cache.set: value cannot be nil")
+	}
 
 	expiration := -1 // Default to no expiration
 	if L.GetTop() > 2 {
@@ -131,7 +122,7 @@ func luaCacheSet(L *lua.LState) int {
 		}
 		expiration = exp
 	}
-	err := cache.Set(key, goValue, expiration)
+	err := cache.Set(key, value, expiration)
 	if err != nil {
 		L.RaiseError("cache.set: %v", err)
 		return 0
@@ -142,18 +133,13 @@ func luaCacheSet(L *lua.LState) int {
 
 // luaCacheDelete removes a value from the cache by key.
 func luaCacheDelete(L *lua.LState) int {
-	if L.GetTop() < 1 {
-		L.RaiseError("cache.delete: key is required")
-		return 0
-	}
-
 	cache := GetCache(L)
 	if cache == nil {
 		L.RaiseError("cache.delete: Cache not found in context")
 		return 0
 	}
 
-	key := L.ToString(1)
+	key := utils.GetString(L, 1)
 	if key == "" {
 		L.RaiseError("cache.delete: key cannot be empty")
 		return 0
