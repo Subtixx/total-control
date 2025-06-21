@@ -245,3 +245,14 @@ func GetFunction(L *lua.LState, index int) *lua.LFunction {
 
 	return val.(*lua.LFunction)
 }
+
+func GetFromLuaValue(L *lua.LState, index int) interface{} {
+	if L.GetTop() < index {
+		L.RaiseError(fmt.Sprintf("Expected at least %d arguments, got %d", index, L.GetTop()))
+		return nil
+	}
+
+	val := L.Get(index)
+
+	return FromLuaValue(L, val)
+}
