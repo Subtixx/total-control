@@ -6,7 +6,6 @@ import (
 	"TotalControl/backend/utils"
 	"flag"
 	log "github.com/sirupsen/logrus"
-	"net/http"
 	"os"
 )
 
@@ -38,16 +37,11 @@ func app() {
 	}
 	pluginManager.Shutdown()
 
-	games := steam.GetInstalledGames()
+	steamLibraries, err := steam.GetSteamLibraries()
+	games := steam.GetInstalledGames(steamLibraries)
 	log.Infof("Found %d installed games", len(games))
 	for _, game := range games {
-		log.Infof("Game: %s", game)
-		appDetails, err := steam.GetAppDetails(http.DefaultClient, game)
-		if err != nil || !appDetails.Success {
-			continue
-		}
-		appDetailsData := appDetails.Data
-		log.Infof("App Details: Name=%s", appDetailsData.Name)
+		log.Infof("Game: %s (ID: %s)", game.AppState.Name, game.AppState.AppID)
 	}
 
 	/*
