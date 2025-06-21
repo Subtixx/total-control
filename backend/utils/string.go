@@ -2,6 +2,7 @@ package utils
 
 import (
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -32,6 +33,45 @@ func BoolToString(val bool) string {
 		return "true"
 	}
 	return "false"
+}
+
+func StringToInt(s string) int {
+	if s == "" {
+		return 0
+	}
+
+	i, err := strconv.Atoi(s)
+	if err != nil {
+		return 0 // Return 0 if conversion fails
+	}
+
+	return i
+}
+
+func StringToInt64(s string) int64 {
+	if s == "" {
+		return 0
+	}
+
+	i, err := strconv.ParseInt(s, 10, 64)
+	if err != nil {
+		return 0 // Return 0 if conversion fails
+	}
+
+	return i
+}
+
+func StringToFloat(s string) float64 {
+	if s == "" {
+		return 0.0
+	}
+
+	f, err := strconv.ParseFloat(s, 64)
+	if err != nil {
+		return 0.0 // Return 0.0 if conversion fails
+	}
+
+	return f
 }
 
 func ArrayContains(slice []string, item string) bool {
