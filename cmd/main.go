@@ -2,9 +2,11 @@ package main
 
 import (
 	"TotalControl/backend/scripting"
+	"TotalControl/backend/steam"
 	"TotalControl/backend/utils"
 	"flag"
 	log "github.com/sirupsen/logrus"
+	"net/http"
 	"os"
 )
 
@@ -35,6 +37,18 @@ func app() {
 		}
 	}
 	pluginManager.Shutdown()
+
+	games := steam.GetInstalledGames()
+	log.Infof("Found %d installed games", len(games))
+	for _, game := range games {
+		log.Infof("Game: %s", game)
+		appDetails, err := steam.GetAppDetails(http.DefaultClient, game)
+		if err != nil || !appDetails.Success {
+			continue
+		}
+		appDetailsData := appDetails.Data
+		log.Infof("App Details: Name=%s", appDetailsData.Name)
+	}
 
 	/*
 			plugin, err := scripting.LoadLuaPlugin("plugins/factorio")
