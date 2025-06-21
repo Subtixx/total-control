@@ -9,6 +9,8 @@ import (
 	"time"
 )
 
+var DefaultCacheTTL = 60 * 60
+
 type CacheValue struct {
 	Value      interface{} `json:"value"`
 	Expiration int         `json:"expiration"`
@@ -18,6 +20,8 @@ type Cache struct {
 	id    string
 	path  string
 	value map[string]CacheValue
+
+	debugMode bool
 }
 
 func NewCache(filename string, id string) *Cache {
@@ -59,6 +63,14 @@ func (c *Cache) Logger() *log.Entry {
 	})
 }
 
+func (c *Cache) LogDebug(message string, args ...interface{}) {
+	if !c.debugMode {
+		return
+	}
+
+	c.Logger().Debugf(message, args...)
+}
+
 func (c *Cache) HasKey(key string) (bool, error) {
 	if key == "" {
 		return false, nil
@@ -78,7 +90,7 @@ func (c *Cache) Get(key string) (interface{}, error) {
 	}
 
 	if cacheValue.Expiration > 0 && cacheValue.Expiration < int(time.Now().Unix()) {
-		c.Logger().Debugf("Key %s has expired %d.", key, int(time.Now().Unix())-cacheValue.Expiration)
+		c.LogDebug("Key %s has expired %d.", key, int(time.Now().Unix())-cacheValue.Expiration)
 		delete(c.value, key)
 		return nil, nil
 	}
@@ -101,14 +113,14 @@ func (c *Cache) Set(key string, value interface{}, expiration int) error {
 		Expiration: expireTime,
 	}
 
-	c.Logger().Debugf("Key %s set to %s, expires %d", key, value, expireTime)
+	c.LogDebug("Key %s set to %s, expires %d", key, value, expireTime)
 	return nil
 }
 
 func (c *Cache) Delete(key string) error {
 	if _, exists := c.value[key]; exists {
 		delete(c.value, key)
-		c.Logger().Debugf("Key %s deleted", key)
+		c.LogDebug("Key %s deleted", key)
 		return nil
 	}
 	return nil
@@ -135,7 +147,7 @@ func (c *Cache) Save() error {
 	if err := encoder.Encode(c.value); err != nil {
 		return err
 	}
-	c.Logger().Debugf("Cache saved to %s", c.path)
+	c.LogDebug("Cache saved to %s", c.path)
 	return nil
 }
 
