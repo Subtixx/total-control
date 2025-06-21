@@ -1,14 +1,23 @@
 {
-  "id": "4edd31cd-6193-43b0-818e-fb2bac791dde",
+  "id": "com.github.subtixx.factorio",
   "name": "Factorio",
   "description": "Enables managing Factorio mods and saves.",
   "author": "IT-Hock",
   "version": "1.0.0",
   "entry": "plugin.lua",
-  "capabilities": [
-    "filesystem",
-    "network"
-  ],
+  "capabilities": {
+    "filesystem": {
+      "path_whitelist": [
+        "$HOME/.factorio/*"
+      ]
+    },
+    "network": {
+      "url_whitelist": [
+        "https://mods.factorio.com/*",
+        "https://api.mod.io/*"
+      ]
+    }
+  },
   "functionality": [
     "mod_management",
     "save_game_management"

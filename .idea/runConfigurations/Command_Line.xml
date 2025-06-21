@@ -2,6 +2,7 @@
   <configuration default="false" name="Command Line" type="GoApplicationRunConfiguration" factoryName="Go Application">
     <module name="TotalControl" />
     <working_directory value="$PROJECT_DIR$" />
+    <parameters value="--game-path=&quot;$USER_HOME$/.local/share/Steam/steamapps/common/Stardew Valley/&quot;" />
     <EXTENSION ID="net.ashald.envfile">
       <option name="IS_ENABLED" value="false" />
       <option name="IS_SUBST" value="false" />

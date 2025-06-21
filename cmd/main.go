@@ -8,6 +8,7 @@ import (
 	"os"
 )
 
+var gamePath *string
 var logPath *string
 var logLevel *string
 
@@ -18,9 +19,20 @@ func app() {
 	if err != nil {
 		log.Fatalf("Failed to initialize plugin manager: %v", err)
 	}
+
 	// Iterate through loaded plugins and print their details
 	for _, plugin := range pluginManager.GetLoadedPlugins() {
 		log.Info("\n" + plugin.PluginInfo.String())
+		isInstalled, err := plugin.DetectGameInstallation(*gamePath)
+		if err != nil {
+			log.Errorf("Failed to detect game installation: %v", err)
+		}
+
+		if isInstalled {
+			log.Infof("Detected game installation for plugin: %s at %s", plugin.Name, *gamePath)
+		} else {
+			log.Warnf("Game installation not found for plugin: %s", plugin.Name)
+		}
 	}
 	pluginManager.Shutdown()
 
@@ -105,8 +117,9 @@ func main() {
 	pluginDir := flag.String("plugin-dir", "", "A directory to load a plugin from")
 	pluginPack := flag.Bool("plugin-pack", false, "Pack the plugin into a .tcplugin file")
 
-	flag.Parse()
+	gamePath = flag.String("game-path", "", "Path to the game installation")
 
+	flag.Parse()
 	if *logPath != "" {
 		f, err := os.OpenFile(*logPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
 		if err != nil {
@@ -123,6 +136,10 @@ func main() {
 	log.SetLevel(level)
 	log.SetReportCaller(true)
 	log.SetFormatter(&utils.CustomFormatter{})
+
+	if gamePath == nil || *gamePath == "" {
+		log.Fatal("Game path is required")
+	}
 
 	if *pluginDir != "" {
 		log.Infof("Loading plugin from directory: %s", *pluginDir)

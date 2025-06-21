@@ -1,0 +1,22 @@
+{
+  "id": "com.github.subtixx.stardew-valley",
+  "name": "Stardew Valley",
+  "author": "IT-Hock",
+  "version": "1.0.0",
+  "description": "A plugin for Stardew Valley",
+  "entry": "plugin.lua",
+  "functionality": [
+    "mod_management",
+    "save_game_management"
+  ],
+  "capabilities": {
+    "filesystem": {
+      "path_whitelist": [
+        "*/.local/share/Steam/steamapps/common/Stardew/*"
+      ]
+    },
+    "network": {
+      "url_whitelist": []
+    }
+  }
+}

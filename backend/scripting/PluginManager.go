@@ -110,14 +110,19 @@ func (pm *PluginManager) loadPlugin(file string) error {
 		return fmt.Errorf("error loading plugin %s: %w", file, err)
 	}
 
-	if _, exists := pm.Plugins[luaPlugin.Id.String()]; exists {
-		return fmt.Errorf("%w: %s (%s)", ErrorAlreadyLoaded, luaPlugin.Name, luaPlugin.Id.String())
+	if _, exists := pm.Plugins[luaPlugin.Id]; exists {
+		return fmt.Errorf("%w: %s (%s)", ErrorAlreadyLoaded, luaPlugin.Name, luaPlugin.Id)
 	}
 
-	pm.Plugins[luaPlugin.Id.String()] = luaPlugin
+	pm.Plugins[luaPlugin.Id] = luaPlugin
 	appDataPath := utils.GetAppDataPath()
-	pluginStoragePath := path.Join(appDataPath, "plugins", luaPlugin.Id.String())
+	pluginStoragePath := path.Join(appDataPath, "plugins", luaPlugin.Id)
 	err = utils.CreateDirectoryIfNotExists(pluginStoragePath)
+	if err != nil {
+		return err
+	}
+
+	err = luaPlugin.Initialize()
 	if err != nil {
 		return err
 	}

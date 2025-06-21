@@ -1,7 +1,6 @@
 package scripting
 
 import (
-	"TotalControl/backend/plugins"
 	"TotalControl/backend/utils"
 	lua "github.com/yuin/gopher-lua"
 	"os"
@@ -9,13 +8,17 @@ import (
 )
 
 func LuaGetFilesInDirectory(L *lua.LState) int {
-	if CheckCan(L, plugins.CapabilityFileSystem) == false {
-		L.Push(lua.LNil)
-		L.Push(lua.LString(plugins.ErrFileSystemAccessDenied))
-		return 2
+	luaPlugin := GetLuaPlugin(L)
+	if luaPlugin == nil {
+		L.RaiseError(ErrPluginNotFound)
+		return 0
 	}
 
-	dir := L.ToString(1)
+	dir := utils.GetString(L, 1)
+	if dir == "" {
+		L.RaiseError("getFilesInDirectory: directory path cannot be empty")
+		return 0
+	}
 	patterns := make([]string, 0)
 
 	if L.Get(2).Type() == lua.LTTable {
@@ -48,16 +51,16 @@ func LuaGetFilesInDirectory(L *lua.LState) int {
 }
 
 func LuaGetFileName(L *lua.LState) int {
-	if CheckCan(L, plugins.CapabilityFileSystem) == false {
-		L.Push(lua.LNil)
-		L.Push(lua.LString(plugins.ErrFileSystemAccessDenied))
-		return 2
+	luaPlugin := GetLuaPlugin(L)
+	if luaPlugin == nil {
+		L.RaiseError(ErrPluginNotFound)
+		return 0
 	}
 
-	filePath := L.ToString(1)
+	filePath := utils.GetString(L, 1)
 	if filePath == "" {
-		L.Push(lua.LNil)
-		return 1
+		L.RaiseError("getFileName: file path cannot be empty")
+		return 0
 	}
 
 	fileName := filepath.Base(filePath)
@@ -66,16 +69,16 @@ func LuaGetFileName(L *lua.LState) int {
 }
 
 func LuaGetFileContent(L *lua.LState) int {
-	if CheckCan(L, plugins.CapabilityFileSystem) == false {
-		L.Push(lua.LNil)
-		L.Push(lua.LString(plugins.ErrFileSystemAccessDenied))
-		return 2
+	luaPlugin := GetLuaPlugin(L)
+	if luaPlugin == nil {
+		L.RaiseError(ErrPluginNotFound)
+		return 0
 	}
 
-	filePath := L.ToString(1)
+	filePath := utils.GetString(L, 1)
 	if filePath == "" {
-		L.Push(lua.LNil)
-		return 1
+		L.RaiseError("getFileContent: file path cannot be empty")
+		return 0
 	}
 
 	content, err := os.ReadFile(filePath)
@@ -87,9 +90,58 @@ func LuaGetFileContent(L *lua.LState) int {
 	return 1
 }
 
+func LuaFileExists(L *lua.LState) int {
+	luaPlugin := GetLuaPlugin(L)
+	if luaPlugin == nil {
+		L.RaiseError(ErrPluginNotFound)
+		return 0
+	}
+
+	filePath := utils.GetString(L, 1)
+	if filePath == "" {
+		L.RaiseError("fileExists: file path cannot be empty")
+		return 0
+	}
+
+	_, err := os.Stat(filePath)
+	if err != nil {
+		L.Push(lua.LFalse)
+	} else {
+		L.Push(lua.LTrue)
+	}
+	return 1
+}
+
+func LuaPathJoin(L *lua.LState) int {
+	luaPlugin := GetLuaPlugin(L)
+	if luaPlugin == nil {
+		L.RaiseError(ErrPluginNotFound)
+		return 0
+	}
+
+	path := utils.GetString(L, 1)
+	if path == "" {
+		L.RaiseError("path.join: path cannot be empty")
+		return 0
+	}
+
+	for i := 2; i <= L.GetTop(); i++ {
+		luaPath := utils.GetString(L, i)
+		if luaPath == "" {
+			L.RaiseError("path.join: path cannot be empty")
+		}
+		path = filepath.Join(path, luaPath)
+	}
+
+	L.Push(lua.LString(path))
+	return 1
+}
+
 func LuaExtendIoTable(l *lua.LState) {
 	table := GetOrCreateTable(l, "io")
 	l.SetField(table, "getFilesInDirectory", l.NewFunction(LuaGetFilesInDirectory))
 	l.SetField(table, "getFileName", l.NewFunction(LuaGetFileName))
 	l.SetField(table, "getFileContent", l.NewFunction(LuaGetFileContent))
+	l.SetField(table, "fileExists", l.NewFunction(LuaFileExists))
+	l.SetField(table, "pathJoin", l.NewFunction(LuaPathJoin))
 }

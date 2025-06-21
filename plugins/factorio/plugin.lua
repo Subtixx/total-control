@@ -125,6 +125,14 @@ return {
     GetInstalledModByID = function(self, id)
         -- Example: return a mod by id
     end,
+    DetectGameInstallation = function(self, path)
+        -- Check for existence of config-path.cfg
+        local config_path = io.pathJoin(path, "config-path.cfg")
+        if not io.fileExists(config_path) then
+            return false
+        end
+        return true
+    end,
     GetGameModDirectory = function()
         -- This is usually located at:
         -- - Linux: ~/.factorio/mods/
@@ -133,12 +141,12 @@ return {
         if os.is_windows then
             local appdata = os.getenv("APPDATA")
             if appdata then
-                return appdata .. "\\Factorio\\mods\\"
+                return io.pathJoin(appdata, "Factorio", "mods")
             end
         elseif os.is_linux then
-            return os.getenv("HOME") .. "/.factorio/mods/"
+            return io.pathJoin(os.getenv("HOME"), ".factorio", "mods")
         elseif os.is_macos then
-            return os.getenv("HOME") .. "/Library/Application Support/factorio/mods/"
+            return io.pathJoin(os.getenv("HOME"), "Library", "Application Support", "factorio", "mods")
         end
         return nil -- Unsupported OS
     end,

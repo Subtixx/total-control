@@ -2,7 +2,6 @@ package utils
 
 import (
 	"encoding/json"
-	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 	"math"
 	"os"
@@ -16,15 +15,15 @@ type CacheValue struct {
 }
 
 type Cache struct {
-	uuid  uuid.UUID
+	id    string
 	path  string
 	value map[string]CacheValue
 }
 
-func NewCache(filename string, uuid uuid.UUID) *Cache {
+func NewCache(filename string, id string) *Cache {
 	cache := &Cache{
+		id:    id,
 		value: make(map[string]CacheValue),
-		uuid:  uuid,
 	}
 
 	if filename == "" {
@@ -56,7 +55,7 @@ func NewCache(filename string, uuid uuid.UUID) *Cache {
 func (c *Cache) Logger() *log.Entry {
 	return log.WithFields(log.Fields{
 		"prefix": "CACHE",
-		"plugin": c.uuid.String(),
+		"plugin": c.id,
 	})
 }
 

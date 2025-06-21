@@ -1,17 +1,11 @@
 <script setup lang="ts">
+import {usePluginsStore} from "@/stores/plugins";
+import RepositoryEntry from "@components/RepositoryEntry.vue";
+import {plugins} from "@wails/go/models.ts";
 import {onMounted, ref} from 'vue';
 import {toast} from "vue3-toastify";
-import {usePluginsStore} from "@/stores/plugins";
-import TrashIcon from '~icons/heroicons-solid/trash.svg';
-import ExclamationTriangleIcon from '~icons/heroicons-solid/exclamation-triangle.svg';
 
 const pluginsStore = usePluginsStore();
-
-type PluginRepository = {
-    id: string;
-    name: string;
-    url: string;
-}
 
 const autoUpdatePlugins = ref(false);
 const pluginUpdateCheckEnabled = ref(false);
@@ -19,10 +13,7 @@ const updateCheckInterval = ref(1);
 const updateNotificationEnabled = ref(false);
 const newRepositoryUrl = ref('');
 
-const pluginRepositories = ref<PluginRepository[]>([
-    {id: 'default', name: 'Default Repository', url: 'https://default-repo.example.com'},
-    {id: 'custom', name: 'Custom Repository', url: 'https://custom-repo.example.com'}
-]);
+const pluginRepositories = ref<Array<plugins.PluginRepository>>([]);
 
 onMounted(async () => {
     pluginRepositories.value = await pluginsStore.getPluginRepositories();
@@ -30,7 +21,6 @@ onMounted(async () => {
 
 const addRepository = (url: string) => {
     if (!url) {
-        // Show toast
         toast('Please enter a valid repository URL!', {
             type: 'error',
             position: 'top-right',
@@ -39,8 +29,15 @@ const addRepository = (url: string) => {
         return;
     }
 
+    if (!isRepositoryUrlValid(url)) {
+        toast('Please enter a valid repository URL!', {
+            type: 'error',
+            position: 'top-right',
+            autoClose: 3000,
+        });
+    }
+
     if (pluginRepositories.value.some(repo => repo.url === url)) {
-        // Show toast
         toast('Repository already exists!', {
             type: 'error',
             position: 'top-right',
@@ -50,12 +47,11 @@ const addRepository = (url: string) => {
     }
 
     const uuid = crypto.randomUUID();
-
-    const newRepo: PluginRepository = {
+    const newRepo: plugins.PluginRepository = plugins.PluginRepository.createFrom({
         id: uuid,
-        name: `Repository ${pluginRepositories.value.length + 1}`,
-        url
-    };
+        url: url,
+        plugins: [],
+    });
     pluginRepositories.value.push(newRepo);
 };
 const removeRepository = (id: string) => {
@@ -70,6 +66,16 @@ const removeRepository = (id: string) => {
 
     pluginRepositories.value.splice(index, 1);
 };
+
+const isRepositoryUrlValid = (url: string) => {
+    try {
+        new URL(url);
+        return true;
+    } catch (error) {
+        console.error('Error parsing URL:', error);
+        return false;
+    }
+}
 </script>
 
 <template>
@@ -120,46 +126,33 @@ const removeRepository = (id: string) => {
                         <label class="label cursor-pointer">
                             <span class="label-text">Plugin Repositories</span>
                         </label>
-                        <p class="text-sm text-gray-500 mt-2">Manage your plugin repositories. Add or remove
-                            repositories to customize where plugins are sourced from.</p>
+                        <p class="text-sm text-gray-500 mt-2">
+                            Manage your plugin repositories. Add or remove
+                            repositories to customize where plugins are sourced from.
+                        </p>
                         <div class="flex flex-col space-y-2 mt-2">
                             <div class="flex items-center space-x-2">
-                                <input type="text" class="flex-grow input"
+                                <input type="text"
+                                       class="focus:outline-none focus:ring-0 focus-within:outline-none focus-within:ring-0 flex-grow input"
                                        v-model="newRepositoryUrl"
                                        placeholder="Add new repository URL"/>
                                 <button
                                     @click="addRepository(newRepositoryUrl)"
-                                    :disabled="!newRepositoryUrl || newRepositoryUrl.trim() === ''"
+                                    :disabled="!isRepositoryUrlValid(newRepositoryUrl)"
                                     class="btn btn-info">Add Repository
                                 </button>
                             </div>
-                            <div class="min-h-36">
-                                <div v-for="repo in pluginRepositories" :key="repo.id"
-                                     class="flex gap-4 items-center p-2 group hover:bg-base-200">
-                                    <div class="tooltip">
-                                        <div class="tooltip-content">
-                                            Cannot fetch plugins from this repository
-                                        </div>
-                                        <div class="text-error">
-                                            <ExclamationTriangleIcon/>
-                                        </div>
-                                    </div>
-                                    <span class="flex-grow">{{ repo.name }}</span>
-                                    <span class="text-sm text-gray-500 max-w-xl overflow-hidden text-ellipsis">
-                                        {{ repo.url }}
-                                    </span>
-                                    <button
-                                        @click="removeRepository(repo.id)"
-                                        :disabled="repo.id === 'default'"
-                                        class="btn btn-error btn-sm opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <TrashIcon/>
-                                    </button>
-                                </div>
+                            <div class="h-36 bg-base-300 overflow-y-auto">
+                                <RepositoryEntry
+                                    v-for="repo in pluginRepositories"
+                                    :key="repo.id"
+                                    :repo="repo"
+                                />
                             </div>
                         </div>
                     </div>
                     <div class="flex items-center justify-between">
-                        <router-link :to="{ name: 'Plugins' }" class="btn btn-secondary">
+                        <router-link :to="{ name: 'Plugins' }" class="btn">
                             Back to Plugins
                         </router-link>
                         <button class="btn btn-primary" @click="() => alert('Settings saved!')">Save Settings</button>

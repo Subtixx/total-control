@@ -173,3 +173,75 @@ func StructToLuaTable(L *lua.LState, s interface{}) *lua.LTable {
 	}
 	return tbl
 }
+
+func GetString(L *lua.LState, index int) string {
+	if L.GetTop() < index {
+		L.RaiseError(fmt.Sprintf("Expected at least %d arguments, got %d", index, L.GetTop()))
+		return ""
+	}
+
+	val := L.Get(index)
+	if val.Type() != lua.LTString {
+		L.RaiseError(fmt.Sprintf("Expected argument %d to be a string, got %s", index, val.Type().String()))
+		return ""
+	}
+
+	return val.String()
+}
+
+func GetNumber(L *lua.LState, index int) float64 {
+	if L.GetTop() < index {
+		L.RaiseError(fmt.Sprintf("Expected at least %d arguments, got %d", index, L.GetTop()))
+		return 0
+	}
+
+	val := L.Get(index)
+	if val.Type() != lua.LTNumber {
+		L.RaiseError(fmt.Sprintf("Expected argument %d to be a number, got %s", index, val.Type().String()))
+		return 0
+	}
+	return 0
+}
+
+func GetBool(L *lua.LState, index int) bool {
+	if L.GetTop() < index {
+		L.RaiseError(fmt.Sprintf("Expected at least %d arguments, got %d", index, L.GetTop()))
+		return false
+	}
+
+	val := L.Get(index)
+	if val.Type() != lua.LTBool {
+		L.RaiseError(fmt.Sprintf("Expected argument %d to be a boolean, got %s", index, val.Type().String()))
+		return false
+	}
+	return false
+}
+
+func GetTable(L *lua.LState, index int) *lua.LTable {
+	if L.GetTop() < index {
+		L.RaiseError(fmt.Sprintf("Expected at least %d arguments, got %d", index, L.GetTop()))
+		return nil
+	}
+
+	val := L.Get(index)
+	if val.Type() != lua.LTTable {
+		L.RaiseError(fmt.Sprintf("Expected argument %d to be a table, got %s", index, val.Type().String()))
+		return nil
+	}
+	return val.(*lua.LTable)
+}
+
+func GetFunction(L *lua.LState, index int) *lua.LFunction {
+	if L.GetTop() < index {
+		L.RaiseError(fmt.Sprintf("Expected at least %d arguments, got %d", index, L.GetTop()))
+		return nil
+	}
+
+	val := L.Get(index)
+	if val.Type() != lua.LTFunction {
+		L.RaiseError(fmt.Sprintf("Expected argument %d to be a function, got %s", index, val.Type().String()))
+		return nil
+	}
+
+	return val.(*lua.LFunction)
+}

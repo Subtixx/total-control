@@ -1,7 +1,6 @@
 package scripting
 
 import (
-	"TotalControl/backend/plugins"
 	"TotalControl/backend/utils"
 	lua "github.com/yuin/gopher-lua"
 )
@@ -14,23 +13,10 @@ func LuaRegisterZipObject(l *lua.LState) {
 }
 
 func LuaReadFilesFromZip(L *lua.LState) int {
-	luaPlugin := GetLuaPlugin(L)
-	if luaPlugin == nil {
-		L.Push(lua.LNil)
-		L.Push(lua.LString(ErrPluginNotFound))
-		return 2
-	}
-
-	if !luaPlugin.CanAccessFileSystem() {
-		L.Push(lua.LNil)
-		L.Push(lua.LString(plugins.ErrFileSystemAccessDenied))
-		return 2
-	}
-
-	zipPath := L.ToString(1)
+	zipPath := utils.GetString(L, 1)
 	if zipPath == "" {
-		L.Push(lua.LNil)
-		return 1
+		L.RaiseError("zip.readFiles: zip path cannot be empty")
+		return 0
 	}
 
 	files, err := utils.ReadFilesFromZip(zipPath)
@@ -48,20 +34,25 @@ func LuaReadFilesFromZip(L *lua.LState) int {
 }
 
 func LuaReadFileFromZip(L *lua.LState) int {
-	zipPath := L.ToString(1)
-	fileName := L.ToString(2)
-	useRegEx := true
-	if L.GetTop() > 2 {
-		if L.Get(3).Type() != lua.LTBool {
-			L.RaiseError("Expected boolean for useRegEx, got %s", L.Get(3).Type().String())
-			return 0
-		}
-		useRegEx = L.ToBool(3)
+	luaPlugin := GetLuaPlugin(L)
+	if luaPlugin == nil {
+		L.RaiseError(ErrPluginNotFound)
+		return 0
+	}
+	zipPath := utils.GetString(L, 1)
+	if zipPath == "" {
+		L.RaiseError("zip.readFile: zip path cannot be empty")
+		return 0
 	}
 
-	if zipPath == "" || fileName == "" {
-		L.Push(lua.LNil)
-		return 1
+	fileName := utils.GetString(L, 2)
+	if fileName == "" {
+		L.RaiseError("zip.readFile: file name cannot be empty")
+		return 0
+	}
+	useRegEx := true
+	if L.GetTop() > 2 {
+		useRegEx = utils.GetBool(L, 3)
 	}
 
 	data, err := utils.ReadFileFromZip(zipPath, fileName, useRegEx)

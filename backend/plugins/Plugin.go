@@ -3,7 +3,6 @@ package plugins
 import (
 	"TotalControl/backend/utils"
 	"archive/zip"
-	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 	"os"
 	"path"
@@ -99,20 +98,20 @@ func (p *Plugin) Pack() error {
 	return nil
 }
 
-func GetPluginAppDataPath(pluginId uuid.UUID) string {
+func GetPluginAppDataPath(pluginId string) string {
 	appDataPath := utils.GetAppDataPath()
-	return path.Join(appDataPath, "plugins", pluginId.String())
+	return path.Join(appDataPath, "plugins", pluginId)
 }
 
 func (p *Plugin) GetPluginAppDataPath() string {
 	appDataPath := utils.GetAppDataPath()
-	return path.Join(appDataPath, "plugins", p.Id.String())
+	return path.Join(appDataPath, "plugins", p.Id)
 }
 
 func (p *Plugin) Logger() *log.Entry {
 	return log.WithFields(log.Fields{
 		"prefix": "PLG",
-		"plugin": p.Id.String(),
+		"plugin": p.Id,
 	})
 }
 

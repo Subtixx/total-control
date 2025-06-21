@@ -7,7 +7,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 	lua "github.com/yuin/gopher-lua"
 	"net/http"
@@ -30,14 +29,15 @@ type LuaPlugin struct {
 	// -------------------------------
 	plugin *lua.LTable
 	// -------------------------------
-	getMods             *lua.LFunction
-	getInstalledMods    *lua.LFunction
-	getModByID          *lua.LFunction
-	addMod              *lua.LFunction
-	removeMod           *lua.LFunction
-	updateMod           *lua.LFunction
-	getGameModDirectory *lua.LFunction
-	getGameID           *lua.LFunction
+	LuaFuncGetMods                *lua.LFunction
+	LuaFuncGetInstalledMods       *lua.LFunction
+	LuaFuncGetModByID             *lua.LFunction
+	LuaFuncAddMod                 *lua.LFunction
+	LuaFuncRemoveMod              *lua.LFunction
+	LuaFuncUpdateMod              *lua.LFunction
+	LuaFuncGetGameModDirectory    *lua.LFunction
+	LuaFuncGetGameID              *lua.LFunction
+	LuaFuncDetectGameInstallation *lua.LFunction
 }
 
 func LoadPlugin(filePath string) (*LuaPlugin, error) {
@@ -78,8 +78,8 @@ func LoadLuaPluginFromZip(pluginZipPath string) (*LuaPlugin, error) {
 		return nil, fmt.Errorf("failed to unmarshal plugin info: %w", err)
 	}
 
-	if plugin.Id == uuid.Nil {
-		return nil, fmt.Errorf("plugin ID is not set or is invalid")
+	if !plugin.PluginInfo.IsValid() {
+		return nil, fmt.Errorf("plugin info is not valid")
 	}
 
 	if plugin.EntryPoint == "" {
@@ -92,8 +92,8 @@ func LoadLuaPluginFromZip(pluginZipPath string) (*LuaPlugin, error) {
 	plugin.PluginDir = pluginZipPath
 	plugin.IsPacked = true
 	plugin.LuaEngine = LuaEngine{
-		L:    lua.NewState(),
-		uuid: plugin.Id,
+		id: plugin.Id,
+		L:  lua.NewState(),
 	}
 	luaEngineOptions := LuaEngineSetupOptions{
 		Context:       context.Background(),
@@ -136,7 +136,7 @@ func LoadLuaPlugin(pluginDir string) (*LuaPlugin, error) {
 		return nil, err
 	}
 
-	if plugin.Id == uuid.Nil {
+	if plugin.Id == "" {
 		return nil, fmt.Errorf("plugin ID is not set or is invalid")
 	}
 
@@ -150,8 +150,8 @@ func LoadLuaPlugin(pluginDir string) (*LuaPlugin, error) {
 	plugin.PluginDir = pluginDir
 	plugin.IsPacked = false
 	plugin.LuaEngine = LuaEngine{
-		L:    lua.NewState(),
-		uuid: plugin.Id,
+		L:  lua.NewState(),
+		id: plugin.Id,
 	}
 	luaEngineOptions := LuaEngineSetupOptions{
 		Context:       context.Background(),
@@ -203,7 +203,7 @@ func loadPluginScriptFile(l *lua.LState, scriptPath string) (*lua.LTable, error)
 func (p *LuaPlugin) Logger() *log.Entry {
 	return log.WithFields(log.Fields{
 		"lua":    true,
-		"plugin": p.Id.String(),
+		"plugin": p.Id,
 	})
 }
 
@@ -221,55 +221,62 @@ func (p *LuaPlugin) Initialize() error {
 		return fmt.Errorf("plugin table is not initialized")
 	}
 
-	p.getMods = p.L.GetField(p.plugin, "GetMods").(*lua.LFunction)
-	if p.getMods == nil {
-		p.Logger().Error("GetMods function not found in plugin table")
-		return fmt.Errorf("GetMods function not found in plugin table")
+	var err error
+	p.LuaFuncGetMods, err = p.GetLuaFunction(p.plugin, "GetMods")
+	if err != nil {
+		p.Logger().Errorf("failed to get GetMods function: %v", err)
+		return err
 	}
 
-	p.getInstalledMods = p.L.GetField(p.plugin, "GetInstalledMods").(*lua.LFunction)
-	if p.getInstalledMods == nil {
-		p.Logger().Error("GetInstalledMods function not found in plugin table")
-		return fmt.Errorf("GetInstalledMods function not found in plugin table")
+	p.LuaFuncGetInstalledMods, err = p.GetLuaFunction(p.plugin, "GetInstalledMods")
+	if err != nil {
+		p.Logger().Errorf("failed to get GetInstalledMods function: %v", err)
+		return err
 	}
 
-	p.getModByID = p.L.GetField(p.plugin, "GetModByID").(*lua.LFunction)
-	if p.getModByID == nil {
-		p.Logger().Error("GetModByID function not found in plugin table")
-		return fmt.Errorf("GetModByID function not found in plugin table")
+	p.LuaFuncGetModByID, err = p.GetLuaFunction(p.plugin, "GetModByID")
+	if err != nil {
+		p.Logger().Errorf("failed to get GetModByID function: %v", err)
+		return err
 	}
 
-	p.addMod = p.L.GetField(p.plugin, "AddMod").(*lua.LFunction)
-	if p.addMod == nil {
-		p.Logger().Error("AddMod function not found in plugin table")
-		return fmt.Errorf("AddMod function not found in plugin table")
+	p.LuaFuncAddMod, err = p.GetLuaFunction(p.plugin, "AddMod")
+	if err != nil {
+		p.Logger().Errorf("failed to get AddMod function: %v", err)
+		return err
 	}
 
-	p.removeMod = p.L.GetField(p.plugin, "RemoveMod").(*lua.LFunction)
-	if p.removeMod == nil {
-		p.Logger().Error("RemoveMod function not found in plugin table")
-		return fmt.Errorf("RemoveMod function not found in plugin table")
+	p.LuaFuncRemoveMod, err = p.GetLuaFunction(p.plugin, "RemoveMod")
+	if err != nil {
+		p.Logger().Errorf("failed to get RemoveMod function: %v", err)
+		return err
 	}
 
-	p.updateMod = p.L.GetField(p.plugin, "UpdateMod").(*lua.LFunction)
-	if p.updateMod == nil {
-		p.Logger().Error("UpdateMod function not found in plugin table")
-		return fmt.Errorf("UpdateMod function not found in plugin table")
+	p.LuaFuncUpdateMod, err = p.GetLuaFunction(p.plugin, "UpdateMod")
+	if err != nil {
+		p.Logger().Errorf("failed to get UpdateMod function: %v", err)
+		return err
 	}
 
-	p.getGameModDirectory = p.L.GetField(p.plugin, "GetGameModDirectory").(*lua.LFunction)
-	if p.getGameModDirectory == nil {
-		p.Logger().Error("GetGameModDirectory function not found in plugin table")
-		return fmt.Errorf("GetGameModDirectory function not found in plugin table")
+	p.LuaFuncGetGameModDirectory, err = p.GetLuaFunction(p.plugin, "GetGameModDirectory")
+	if err != nil {
+		p.Logger().Errorf("failed to get GetGameModDirectory function: %v", err)
+		return err
 	}
 
-	p.getGameID = p.L.GetField(p.plugin, "GetGameID").(*lua.LFunction)
-	if p.getGameID == nil {
-		p.Logger().Error("GetGameID function not found in plugin table")
-		return fmt.Errorf("GetGameID function not found in plugin table")
+	p.LuaFuncGetGameID, err = p.GetLuaFunction(p.plugin, "GetGameID")
+	if err != nil {
+		p.Logger().Errorf("failed to get GetGameID function: %v", err)
+		return err
 	}
 
-	p.Logger().Debugf("Lua plugin %s initialized with ID %s", p.Name, p.Id.String())
+	p.LuaFuncDetectGameInstallation, err = p.GetLuaFunction(p.plugin, "DetectGameInstallation")
+	if err != nil {
+		p.Logger().Errorf("failed to get DetectGameInstallation function: %v", err)
+		return err
+	}
+
+	p.Logger().Debugf("Lua plugin %s initialized with ID %s", p.Name, p.Id)
 	return nil
 }
 
@@ -283,17 +290,17 @@ func (p *LuaPlugin) Shutdown() error {
 		return fmt.Errorf("failed to shutdown plugin: %w", err)
 	}
 
-	p.Logger().Infof("Lua plugin %s with ID %s has been shut down", p.Name, p.Id.String())
+	p.Logger().Infof("Lua plugin %s with ID %s has been shut down", p.Name, p.Id)
 	return nil
 }
 
 func (p *LuaPlugin) GetMods() (map[string]interface{}, error) {
-	if p.getMods == nil {
+	if p.LuaFuncGetMods == nil {
 		p.Logger().Error("GetMods function is not initialized")
 		return nil, fmt.Errorf("GetMods function is not initialized")
 	}
 
-	callFunc, err := p.CallFunc(p.plugin, p.getMods)
+	callFunc, err := p.CallFunc(p.plugin, p.LuaFuncGetMods)
 	if err != nil {
 		return nil, err
 	}
@@ -320,6 +327,26 @@ func (p *LuaPlugin) GetMods() (map[string]interface{}, error) {
 	})
 	p.Logger().Debugf("Retrieved %d mods from Lua plugin %s", len(foundMods), p.Name)
 	return foundMods, nil
+}
+
+func (p *LuaPlugin) DetectGameInstallation(path string) (bool, error) {
+	if p.LuaFuncDetectGameInstallation == nil {
+		p.Logger().Error("DetectGameInstallation function is not initialized")
+		return false, fmt.Errorf("DetectGameInstallation function is not initialized")
+	}
+
+	luaPath := utils.ToLuaValue(p.L, path)
+	callFunc, err := p.CallFunc(p.plugin, p.LuaFuncDetectGameInstallation, luaPath)
+	if err != nil {
+		return false, err
+	}
+
+	if callFunc.Type() != lua.LTBool {
+		p.Logger().Errorf("expected Lua boolean for game installation detection, got %s", callFunc.Type().String())
+		return false, fmt.Errorf("expected Lua boolean for game installation detection, got %s", callFunc.Type().String())
+	}
+
+	return utils.FromLuaValue(p.L, callFunc).(bool), nil
 }
 
 func (p *LuaPlugin) GetHttpClient() *http.Client {

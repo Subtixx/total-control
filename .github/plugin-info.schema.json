@@ -29,18 +29,6 @@
       "type": "string",
       "description": "The entry point lua file for the plugin, which is executed when the plugin is loaded."
     },
-    "capabilities": {
-      "type": "array",
-      "items": {
-        "type": "string",
-        "enum": [
-          "filesystem",
-          "network"
-        ],
-        "description": "A list of capabilities that the plugin provides, such as 'mod-management', 'save-management', etc."
-      },
-      "description": "An array of capabilities that the plugin supports."
-    },
     "functionality": {
       "type": "array",
       "items": {
@@ -61,7 +49,13 @@
         "properties": {
           "type": {
             "type": "string",
-            "enum": ["string", "number", "boolean", "array", "object"],
+            "enum": [
+              "string",
+              "number",
+              "boolean",
+              "array",
+              "object"
+            ],
             "description": "The type of the setting."
           },
           "description": {
@@ -69,11 +63,21 @@
             "description": "A description of the setting."
           },
           "default": {
-            "type": ["string", "number", "boolean", "array", "object", "null"],
+            "type": [
+              "string",
+              "number",
+              "boolean",
+              "array",
+              "object",
+              "null"
+            ],
             "description": "The default value for the setting."
           }
         },
-        "required": ["type", "description"]
+        "required": [
+          "type",
+          "description"
+        ]
       }
     }
   },

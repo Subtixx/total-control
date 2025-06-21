@@ -9,7 +9,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 	lua "github.com/yuin/gopher-lua"
 	"path"
@@ -18,7 +17,7 @@ import (
 )
 
 type LuaEngine struct {
-	uuid  uuid.UUID
+	id    string
 	L     *lua.LState `json:"-"`
 	Cache *utils.Cache
 }
@@ -28,11 +27,11 @@ type LuaEngineSetupOptions struct {
 	ContextValues map[string]interface{}
 }
 
-func NewLuaEngine(luaEngineId uuid.UUID) (*LuaEngine, error) {
+func NewLuaEngine(luaEngineId string) (*LuaEngine, error) {
 	L := lua.NewState()
 	engine := &LuaEngine{
-		L:    L,
-		uuid: luaEngineId,
+		L:  L,
+		id: luaEngineId,
 	}
 	err := engine.Setup(LuaEngineSetupOptions{
 		Context:       context.Background(),
@@ -78,7 +77,7 @@ func GetLogger(L *lua.LState) *log.Entry {
 func (l *LuaEngine) Logger() *log.Entry {
 	return log.WithFields(log.Fields{
 		"lua":    true,
-		"plugin": l.uuid.String(),
+		"plugin": l.id,
 	})
 }
 
@@ -119,7 +118,7 @@ func (l *LuaEngine) Setup(options LuaEngineSetupOptions) error {
 
 // setupContext sets the LuaEngine context
 func (l *LuaEngine) setupContext(options LuaEngineSetupOptions) error {
-	if l.uuid == uuid.Nil {
+	if l.id == "" {
 		return errors.New("LuaEngine UUID cannot be nil")
 	}
 	ctx := context.WithValue(options.Context, "luaengine", l)
@@ -134,8 +133,8 @@ func (l *LuaEngine) setupContext(options LuaEngineSetupOptions) error {
 
 // setupCache initializes the cache for the LuaEngine
 func (l *LuaEngine) setupCache() error {
-	pluginAppDataPath := plugins.GetPluginAppDataPath(l.uuid)
-	l.Cache = utils.NewCache(path.Join(pluginAppDataPath, "cache.json"), l.uuid)
+	pluginAppDataPath := plugins.GetPluginAppDataPath(l.id)
+	l.Cache = utils.NewCache(path.Join(pluginAppDataPath, "cache.json"), l.id)
 	return nil
 }
 
@@ -148,7 +147,6 @@ func (l *LuaEngine) registerGlobals() {
 
 // registerObjects registers custom objects and extensions
 func (l *LuaEngine) registerObjects() {
-	LuaRegisterCapabilitiesObject(l.L)
 	LuaRegisterLogObject(l.L)
 	LuaRegisterJsonObject(l.L)
 	LuaRegisterRegExObject(l.L)
@@ -171,7 +169,7 @@ func (l *LuaEngine) Shutdown() error {
 		}
 	}
 	l.L.Close()
-	l.Logger().Debugf("LuaEngine %s has been shut down", l.uuid.String())
+	l.Logger().Debugf("LuaEngine %s has been shut down", l.id)
 	return err
 }
 
@@ -311,7 +309,7 @@ func (l *LuaEngine) Close() {
 
 func (l *LuaEngine) String() string {
 	return "LuaEngine{" +
-		"\n\tUUID: " + l.uuid.String() +
+		"\n\tUUID: " + l.id +
 		"\n\tCache: " + l.Cache.String() +
 		"\n\tLuaState: " + fmt.Sprintf("%p", l.L) +
 		"\n}"
@@ -339,4 +337,21 @@ func (l *LuaEngine) debugPrintLuaState() {
 	})
 	// Join by \n\t
 	log.Debugf("Available Lua functions/methods/objects:\n\t%s", strings.Join(funcs, "\n\t"))
+}
+
+func (l *LuaEngine) GetLuaFunction(obj lua.LValue, skey string) (*lua.LFunction, error) {
+	if obj == nil {
+		return nil, errors.New("object is nil")
+	}
+
+	if obj.Type() != lua.LTTable {
+		return nil, fmt.Errorf("object is not a Lua table, got %s", obj.Type().String())
+	}
+
+	fn := l.L.GetField(obj, skey)
+	if fn.Type() != lua.LTFunction {
+		return nil, fmt.Errorf("method '%s' not found in Lua object", skey)
+	}
+
+	return fn.(*lua.LFunction), nil
 }

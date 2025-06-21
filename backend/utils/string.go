@@ -21,6 +21,12 @@ func Slugify(input string) string {
 	return slug
 }
 
+func IsValidPackageName(name string) bool {
+	// Java package name: dot-separated identifiers, each starting with a letter, followed by letters/digits/underscores, no Java keywords, no empty parts
+	re := regexp.MustCompile(`^([a-zA-Z_][a-zA-Z0-9_]*)(\.[a-zA-Z_][a-zA-Z0-9_]*)*$`)
+	return re.MatchString(name)
+}
+
 func BoolToString(val bool) string {
 	if val {
 		return "true"

@@ -13,11 +13,13 @@ type CustomFormatter struct {
 	showCaller bool
 }
 
-func FormatPrefixString(prefix string) string {
-	if len(prefix) > 5 {
-		prefix = prefix[:5]
+func FormatPrefixString(prefix string, max int) string {
+	if len(prefix) > max {
+		prefix = prefix[:max]
 	}
-	return fmt.Sprintf("[%-5s]", strings.ToUpper(prefix))
+
+	var format = "[%-" + fmt.Sprintf("%d", max) + "s]"
+	return fmt.Sprintf(format, strings.ToUpper(prefix))
 }
 
 func LoggingLevelString(level log.Level) string {
@@ -82,9 +84,9 @@ func (f *CustomFormatter) FormatLua(entry *log.Entry) string {
 	}
 
 	if formatted == "" {
-		formatted = FormatPrefixString("LUA")
+		formatted = FormatPrefixString("LUA", 5)
 		if plugin, ok := entry.Data["plugin"].(string); ok {
-			formatted = formatted + FormatPrefixString(plugin)
+			formatted = formatted + FormatPrefixString(plugin, 36)
 		}
 	}
 
@@ -102,13 +104,13 @@ func (f *CustomFormatter) FormatPrefix(entry *log.Entry) string {
 		return ""
 	}
 
-	return FormatPrefixString(prefix)
+	return FormatPrefixString(prefix, 5)
 }
 
 func (f *CustomFormatter) Format(entry *log.Entry) ([]byte, error) {
 	prefixes := []string{
 		fmt.Sprintf("[%s]", entry.Time.Format("15:04:05")),
-		FormatPrefixString(LoggingLevelString(entry.Level)),
+		FormatPrefixString(LoggingLevelString(entry.Level), 5),
 	}
 
 	caller := f.FormatCaller(entry)
@@ -119,7 +121,7 @@ func (f *CustomFormatter) Format(entry *log.Entry) ([]byte, error) {
 	formattedPrefix := f.FormatPrefix(entry)
 	if formattedPrefix != "" {
 		if plugin, ok := entry.Data["plugin"].(string); ok {
-			prefixes = append(prefixes, formattedPrefix+FormatPrefixString(plugin))
+			prefixes = append(prefixes, formattedPrefix+FormatPrefixString(plugin, 36))
 		} else {
 			prefixes = append(prefixes, formattedPrefix)
 		}

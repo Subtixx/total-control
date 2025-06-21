@@ -48,8 +48,8 @@ const showChangelog = ref(false);
                     {{ plugin.version }}
                 </button>
             </div>
-            <p class="text-sm text-gray-500">
-                By {{ plugin.author }}
+            <p>
+                <span class="badge badge-sm badge-secondary">{{ plugin.author }}</span>
             </p>
             <p class="mt-2">{{ plugin.description }}</p>
             <div class="flex space-x-2 mt-5">

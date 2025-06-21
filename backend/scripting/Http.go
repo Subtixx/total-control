@@ -1,7 +1,6 @@
 package scripting
 
 import (
-	"TotalControl/backend/plugins"
 	"TotalControl/backend/utils"
 	"encoding/json"
 	"fmt"
@@ -26,17 +25,15 @@ func LuaRegisterHttpObject(L *lua.LState) {
 }
 
 func luaHttpGet(L *lua.LState) int {
-	if !CheckCan(L, plugins.CapabilityNetwork) {
-		L.Push(lua.LFalse)
-		L.Push(lua.LString(plugins.ErrNetworkAccessDenied))
-		return 2
-	}
 	httpClient := GetLuaHttpClient(L)
+	if httpClient == nil {
+		L.RaiseError("HTTP client not found in context")
+		return 0
+	}
 
 	if L.GetTop() != 1 {
-		L.Push(lua.LFalse)
-		L.Push(lua.LString("Expected 1 argument: HttpRequest userdata or URL string"))
-		return 2
+		L.RaiseError("Expected 1 argument: URL string/HttpRequest")
+		return 0
 	}
 
 	var httpReq *http.Request
@@ -44,30 +41,26 @@ func luaHttpGet(L *lua.LState) int {
 	if L.Get(1).Type() == lua.LTString {
 		httpReq, err = httpRequestFromUrl(L)
 		if err != nil {
-			L.Push(lua.LFalse)
-			L.Push(lua.LString(err.Error()))
-			return 2
+			L.RaiseError(err.Error())
+			return 0
 		}
 	} else if L.Get(1).Type() == lua.LTUserData {
 		httpReq, err = httpRequestFromStack(L)
 		if err != nil {
-			L.Push(lua.LFalse)
-			L.Push(lua.LString(err.Error()))
-			return 2
+			L.RaiseError(err.Error())
+			return 0
 		}
 	} else {
-		L.Push(lua.LFalse)
-		L.Push(lua.LString("Expected HttpRequest userdata or URL string"))
-		return 2
+		L.RaiseError("Expected HttpRequest userdata or URL string")
+		return 0
 	}
 
 	httpReq.Method = "GET"
 	httpResponse, err := httpClient.Do(httpReq)
 	if err != nil {
 		log.Errorf("HTTP GET request failed: %v", err)
-		L.Push(lua.LFalse)
-		L.Push(lua.LString(err.Error()))
-		return 2
+		L.RaiseError(err.Error())
+		return 0
 	}
 
 	L.Push(newHttpResponseUserData(L, httpResponse))
@@ -75,18 +68,17 @@ func luaHttpGet(L *lua.LState) int {
 }
 
 func luaHttpPost(L *lua.LState) int {
-	if !CheckCan(L, plugins.CapabilityNetwork) {
-		L.Push(lua.LFalse)
-		L.Push(lua.LString(plugins.ErrNetworkAccessDenied))
-		return 2
-	}
 	httpClient := GetLuaHttpClient(L)
+	if httpClient == nil {
+		L.RaiseError("HTTP client not found in context")
+		return 0
+	}
 
 	if L.GetTop() < 1 {
-		L.Push(lua.LFalse)
-		L.Push(lua.LString("Expected at least 1 argument: URL string/HttpRequest and optional body table"))
-		return 2
+		L.RaiseError("Expected 1 argument: URL string/HttpRequest")
+		return 0
 	}
+
 	var httpReq *http.Request
 	var err error
 	if L.Get(1).Type() == lua.LTString {
@@ -94,45 +86,39 @@ func luaHttpPost(L *lua.LState) int {
 		// Body table
 		bodyTable := L.Get(2)
 		if bodyTable.Type() != lua.LTTable {
-			L.Push(lua.LFalse)
-			L.Push(lua.LString("Expected second argument to be a table for POST body"))
-			return 2
+			L.RaiseError("Expected body to be a table")
+			return 0
 		}
 		bodyData := utils.LuaTableToMap(L, bodyTable.(*lua.LTable))
 		bodyString, err := json.Marshal(bodyData)
 		if err != nil {
-			L.Push(lua.LFalse)
-			L.Push(lua.LString(fmt.Sprintf("Failed to marshal body data: %v", err)))
-			return 2
+			L.RaiseError(err.Error())
+			return 0
 		}
 		reader := strings.NewReader(string(bodyString))
 
 		httpReq, err = http.NewRequest("POST", urlStr, reader)
 		if err != nil {
-			L.Push(lua.LFalse)
-			L.Push(lua.LString(err.Error()))
-			return 2
+			L.RaiseError(err.Error())
+			return 0
 		}
 	} else if L.Get(1).Type() == lua.LTUserData {
 		httpReq, err = httpRequestFromStack(L)
 		if err != nil {
-			L.Push(lua.LFalse)
-			L.Push(lua.LString(err.Error()))
-			return 2
+			L.RaiseError(err.Error())
+			return 0
 		}
 	} else {
-		L.Push(lua.LFalse)
-		L.Push(lua.LString("Expected HttpRequest userdata"))
-		return 2
+		L.RaiseError("Expected HttpRequest userdata or URL string")
+		return 0
 	}
 
 	httpReq.Method = "POST"
 	httpResponse, err := httpClient.Do(httpReq)
 	if err != nil {
 		log.Errorf("HTTP POST request failed: %v", err)
-		L.Push(lua.LFalse)
-		L.Push(lua.LString(err.Error()))
-		return 2
+		L.RaiseError(err.Error())
+		return 0
 	}
 
 	L.Push(newHttpResponseUserData(L, httpResponse))
@@ -144,18 +130,17 @@ func luaHttpPost(L *lua.LState) int {
 }
 
 func luaHttpDownloadFile(L *lua.LState) int {
-	if !CheckCan(L, plugins.CapabilityNetwork) {
-		L.Push(lua.LFalse)
-		L.Push(lua.LString(plugins.ErrNetworkAccessDenied))
-		return 2
-	}
 	httpClient := GetLuaHttpClient(L)
+	if httpClient == nil {
+		L.RaiseError("HTTP client not found in context")
+		return 0
+	}
 
 	if L.GetTop() != 2 {
-		L.Push(lua.LFalse)
-		L.Push(lua.LString("Expected 2 arguments: URL string/HttpRequest and destination file path"))
-		return 2
+		L.RaiseError("Expected 2 arguments: URL string/HttpRequest, destination file path")
+		return 0
 	}
+
 	var httpReq *http.Request
 	if L.Get(1).Type() == lua.LTString {
 		urlStr := L.CheckString(1)
@@ -164,41 +149,38 @@ func luaHttpDownloadFile(L *lua.LState) int {
 		var err error
 		httpReq, err = httpRequestFromStack(L)
 		if err != nil {
-			L.Push(lua.LFalse)
-			L.Push(lua.LString(err.Error()))
-			return 2
+			L.RaiseError(err.Error())
+			return 0
 		}
 	} else {
-		L.Push(lua.LFalse)
-		L.Push(lua.LString("Expected URL string or HttpRequest userdata"))
-		return 2
+		L.RaiseError("Expected HttpRequest userdata or URL string")
+		return 0
 	}
 
 	destPath := L.CheckString(2)
 	if destPath == "" {
-		L.Push(lua.LString("Destination file path cannot be empty"))
-		return 2
+		L.RaiseError("Destination path cannot be empty")
+		return 0
 	}
 
 	resp, err := httpClient.Do(httpReq)
 	if err != nil {
 		log.Errorf("HTTP request failed: %v", err)
-		L.Push(lua.LFalse)
-		L.Push(lua.LString(err.Error()))
-		return 2
+		L.RaiseError(err.Error())
+		return 0
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		L.Push(lua.LFalse)
-		L.Push(lua.LString(fmt.Sprintf("HTTP request failed with status code: %d", resp.StatusCode)))
-		return 2
+		L.RaiseError(fmt.Sprintf("HTTP request failed with status code %d", resp.StatusCode))
+		return 0
 	}
+
 	file, err := os.Create(destPath)
 	if err != nil {
-		L.Push(lua.LFalse)
-		L.Push(lua.LString(fmt.Sprintf("Failed to create file: %v", err)))
-		return 2
+		L.RaiseError(fmt.Sprintf("Failed to create file: %v", err))
+		return 0
 	}
+
 	defer func(file *os.File) {
 		err := file.Close()
 		if err != nil {
@@ -212,9 +194,8 @@ func luaHttpDownloadFile(L *lua.LState) int {
 			log.Errorf("Failed to close response body: %v", err)
 		}
 
-		L.Push(lua.LFalse)
-		L.Push(lua.LString(fmt.Sprintf("Failed to write to file: %v", err)))
-		return 2
+		L.RaiseError(fmt.Sprintf("Failed to write file: %v", err))
+		return 0
 	}
 
 	if err := resp.Body.Close(); err != nil {
@@ -222,6 +203,5 @@ func luaHttpDownloadFile(L *lua.LState) int {
 	}
 
 	L.Push(lua.LTrue)
-	L.Push(lua.LNil)
-	return 2
+	return 1
 }
