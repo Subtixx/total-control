@@ -35,40 +35,59 @@ func BoolToString(val bool) string {
 	return "false"
 }
 
-func StringToInt(s string) int {
-	if s == "" {
+func StringToInt(s interface{}) int {
+	if s == nil {
 		return 0
 	}
 
-	i, err := strconv.Atoi(s)
+	str, ok := s.(string)
+	if !ok {
+		return 0
+	}
+
+	i, err := strconv.Atoi(str)
 	if err != nil {
-		return 0 // Return 0 if conversion fails
+		return 0
 	}
 
 	return i
 }
 
-func StringToInt64(s string) int64 {
-	if s == "" {
+func StringToInt64(s interface{}) int64 {
+	if s == nil {
 		return 0
 	}
 
-	i, err := strconv.ParseInt(s, 10, 64)
+	str, ok := s.(string)
+	if !ok {
+		return 0
+	}
+
+	if str == "" {
+		return 0
+	}
+
+	i, err := strconv.ParseInt(str, 10, 64)
 	if err != nil {
-		return 0 // Return 0 if conversion fails
+		return 0
 	}
 
 	return i
 }
 
-func StringToFloat(s string) float64 {
-	if s == "" {
+func StringToFloat(s interface{}) float64 {
+	if s == nil {
 		return 0.0
 	}
 
-	f, err := strconv.ParseFloat(s, 64)
+	str, ok := s.(string)
+	if !ok {
+		return 0.0
+	}
+
+	f, err := strconv.ParseFloat(str, 64)
 	if err != nil {
-		return 0.0 // Return 0.0 if conversion fails
+		return 0.0
 	}
 
 	return f
