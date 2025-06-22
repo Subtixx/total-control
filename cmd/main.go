@@ -37,11 +37,40 @@ func app() {
 	}
 	pluginManager.Shutdown()
 
-	steamLibraries, err := steam.GetSteamLibraries()
-	games := steam.GetInstalledGames(steamLibraries)
-	log.Infof("Found %d installed games", len(games))
-	for _, game := range games {
-		log.Info(game.String())
+	steamInstance := steam.NewSteam()
+	log.Infof("Steam installation path: %s", steamInstance.InstallPath)
+	log.Infof("Found %d library folders", len(steamInstance.LibraryFolders))
+	log.Infof("Found %d installed games", len(steamInstance.AppSchemas))
+	for _, game := range steamInstance.AppSchemas {
+		if _, err := os.Stat(game.GetAppFullInstallPath()); err == nil {
+			size, err := utils.DirSize(game.GetAppFullInstallPath())
+			if err != nil {
+				size = 0
+			}
+
+			log.Infof("Game %s (%s vs %s)",
+				game.AppState.Name,
+				utils.FormatBytes(size),
+				utils.FormatBytes(game.AppState.SizeOnDisk),
+			)
+		}
+
+		lastUpdated := game.AppState.LastUpdated.Format("2006-01-02 15:04:05")
+		if game.AppState.LastUpdated.Unix() == 0 {
+			lastUpdated = "Never Updated"
+		}
+		lastPlayed := game.AppState.LastPlayed.Format("2006-01-02 15:04:05")
+		if game.AppState.LastPlayed.Unix() == 0 {
+			lastPlayed = "Never Played"
+		}
+		log.Infof("%s - %s = %s (%s) | %s, %s",
+			game.AppState.AppID,
+			game.AppState.Name,
+			game.GetAppFullInstallPath(),
+			game.AppState.InstallDir,
+			lastUpdated,
+			lastPlayed,
+		)
 	}
 
 	/*
