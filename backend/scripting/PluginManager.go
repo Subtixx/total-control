@@ -2,6 +2,7 @@ package scripting
 
 import (
 	"TotalControl/backend/plugins"
+	"TotalControl/backend/steam"
 	"TotalControl/backend/utils"
 	"errors"
 	"fmt"
@@ -20,6 +21,7 @@ var (
 
 type PluginManager struct {
 	Plugins map[string]*LuaPlugin
+	Steam   *steam.Steam // Reference to the Steam instance
 
 	pluginRepositories map[string]*plugins.PluginRepository
 }
@@ -47,15 +49,16 @@ func (pm *PluginManager) Logger() *log.Entry {
 	})
 }
 
-func NewPluginManager(pluginDir string) (*PluginManager, error) {
+func NewPluginManager(pluginDir string, steam *steam.Steam) (*PluginManager, error) {
 	pm := &PluginManager{
-		Plugins: make(map[string]*LuaPlugin),
+		Plugins:            make(map[string]*LuaPlugin),
+		pluginRepositories: make(map[string]*plugins.PluginRepository),
+		Steam:              steam,
 	}
 	err := pm.LoadPlugins(pluginDir)
 	if err != nil {
 		return nil, err
 	}
-	pm.pluginRepositories = make(map[string]*plugins.PluginRepository)
 
 	// Add default plugin repositories
 	defaultPluginRepository, err := plugins.NewDefaultPluginRepository()
@@ -102,7 +105,7 @@ func (pm *PluginManager) LoadPlugins(path string) error {
 }
 
 func (pm *PluginManager) loadPlugin(file string) error {
-	luaPlugin, err := LoadPlugin(file)
+	luaPlugin, err := LoadPlugin(pm, file)
 	if err != nil {
 		if errors.Is(err, ErrorNotFound) || errors.Is(err, ErrorInvalidPlugin) {
 			return fmt.Errorf("failed to load plugin %s: %w", file, err)

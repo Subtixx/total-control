@@ -80,6 +80,9 @@ function loadMods()
     return loadModsFromApi()
 end
 
+--print(serpent.block(steam.GetLibraries()))
+print(serpent.block(steam.GetAppSchema("92800")))
+
 return {
     -- The first load of the plugins will be slower.
     mods = loadMods(),

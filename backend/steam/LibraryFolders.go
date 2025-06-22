@@ -4,6 +4,7 @@ import (
 	"TotalControl/backend/utils"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	lua "github.com/yuin/gopher-lua"
 	"os"
 	"path"
 	"time"
@@ -98,6 +99,29 @@ type LibraryFolder struct {
 
 func (library *LibraryFolder) GetAppManifestPath(appId string) string {
 	return path.Join(library.Path, "steamapps", "appmanifest_"+appId+".acf")
+}
+
+func (library *LibraryFolder) ToLuaTable(L *lua.LState) *lua.LTable {
+	libraryTable := L.NewTable()
+	L.SetField(libraryTable, "path", utils.ToLuaValue(L, library.Path))
+	L.SetField(libraryTable, "label", utils.ToLuaValue(L, library.Label))
+	L.SetField(libraryTable, "content_id", utils.ToLuaValue(L, library.ContentId))
+	L.SetField(libraryTable, "total_size", utils.ToLuaValue(L, library.TotalSize))
+	L.SetField(libraryTable, "update_clean_bytes_tally", utils.ToLuaValue(L, library.UpdateCleanBytesTally))
+	L.SetField(libraryTable, "time_last_update_verified", utils.ToLuaValue(L, library.TimeLastUpdateVerified.Unix()))
+	L.SetField(libraryTable, "apps", L.NewTable())
+	for appId, app := range library.Apps {
+		if app.IsBlacklisted() {
+			log.Debugf("Skipping blacklisted app: %s (%s)", app.AppId, blacklistedAppIDs[app.AppId])
+			continue
+		}
+		appTable := L.NewTable()
+		L.SetField(appTable, "app_id", utils.ToLuaValue(L, app.AppId))
+		L.SetField(appTable, "manifest_id", utils.ToLuaValue(L, app.ManifestId))
+		L.SetField(libraryTable.RawGetString("apps"), appId, appTable)
+	}
+	L.SetField(libraryTable, "apps", libraryTable.RawGetString("apps"))
+	return libraryTable
 }
 
 func IsValidLibraryObject(obj map[string]interface{}) bool {

@@ -3,6 +3,7 @@ package scripting
 import (
 	"TotalControl/backend/mods"
 	"TotalControl/backend/plugins"
+	"TotalControl/backend/steam"
 	"TotalControl/backend/utils"
 	"context"
 	"encoding/json"
@@ -26,6 +27,7 @@ type LuaPlugin struct {
 	LuaEngine
 
 	httpClient *http.Client
+	steam      *steam.Steam
 	// -------------------------------
 	plugin *lua.LTable
 	// -------------------------------
@@ -40,20 +42,20 @@ type LuaPlugin struct {
 	LuaFuncDetectGameInstallation *lua.LFunction
 }
 
-func LoadPlugin(filePath string) (*LuaPlugin, error) {
+func LoadPlugin(pm *PluginManager, filePath string) (*LuaPlugin, error) {
 	if info, err := os.Stat(filePath); err == nil && info.IsDir() {
 		// Check if the directory contains an info.json file
 		infoJson := filepath.Join(filePath, "info.json")
 		if _, err := os.Stat(infoJson); err != nil {
 			return nil, fmt.Errorf("info.json not found in plugin directory: %s", filePath)
 		}
-		luaPlugin, err := LoadLuaPlugin(filePath)
+		luaPlugin, err := LoadLuaPlugin(pm, filePath)
 		if err != nil {
 			return nil, err
 		}
 		return luaPlugin, nil
 	} else if strings.HasSuffix(filePath, ".tcplugin") {
-		luaPlugin, err := LoadLuaPluginFromZip(filePath)
+		luaPlugin, err := LoadLuaPluginFromZip(pm, filePath)
 		if err != nil {
 			return nil, fmt.Errorf("failed to load Lua plugin from zip: %w", err)
 		}
@@ -67,7 +69,7 @@ func LoadPlugin(filePath string) (*LuaPlugin, error) {
 }
 
 // LoadLuaPluginFromZip Loads a plugin using a zip with the custom extension ".tcplugin".
-func LoadLuaPluginFromZip(pluginZipPath string) (*LuaPlugin, error) {
+func LoadLuaPluginFromZip(pm *PluginManager, pluginZipPath string) (*LuaPlugin, error) {
 	files, err := utils.ReadFilesFromZip(pluginZipPath)
 	if err != nil {
 		return nil, err
@@ -86,6 +88,7 @@ func LoadLuaPluginFromZip(pluginZipPath string) (*LuaPlugin, error) {
 		return nil, fmt.Errorf("plugin entry point is not set")
 	}
 
+	plugin.steam = pm.Steam
 	plugin.httpClient = &http.Client{
 		Timeout: 5 * time.Second,
 	}
@@ -124,7 +127,7 @@ func LoadLuaPluginFromZip(pluginZipPath string) (*LuaPlugin, error) {
 	return plugin, nil
 }
 
-func LoadLuaPlugin(pluginDir string) (*LuaPlugin, error) {
+func LoadLuaPlugin(pm *PluginManager, pluginDir string) (*LuaPlugin, error) {
 	infoFile := filepath.Join(pluginDir, "info.json")
 	pluginInfo, err := utils.ReadFile(infoFile)
 	if err != nil {
@@ -144,6 +147,7 @@ func LoadLuaPlugin(pluginDir string) (*LuaPlugin, error) {
 		return nil, fmt.Errorf("plugin entry point is not set or does not exist")
 	}
 
+	plugin.steam = pm.Steam
 	plugin.httpClient = &http.Client{
 		Timeout: 5 * time.Second,
 	}
@@ -358,6 +362,10 @@ func (p *LuaPlugin) GetHttpClient() *http.Client {
 	return p.httpClient
 }
 
+func (p *LuaPlugin) GetSteam() *steam.Steam {
+	return p.steam
+}
+
 func GetLuaHttpClient(L *lua.LState) *http.Client {
 	if L == nil {
 		log.Error("Lua state is nil, cannot get HTTP client")
@@ -369,6 +377,25 @@ func GetLuaHttpClient(L *lua.LState) *http.Client {
 		return luaPlugin.GetHttpClient()
 	}
 	return http.DefaultClient
+}
+
+func GetLuaSteam(L *lua.LState) *steam.Steam {
+	if L == nil {
+		log.Error("Lua state is nil, cannot get Steam instance")
+		return nil
+	}
+
+	luaPlugin := GetLuaPlugin(L)
+	if luaPlugin == nil {
+		return nil
+	}
+
+	if luaPlugin.GetSteam() == nil {
+		log.Error("Lua plugin's Steam instance is nil")
+		return nil
+	}
+
+	return luaPlugin.GetSteam()
 }
 
 func GetLuaPlugin(L *lua.LState) *LuaPlugin {

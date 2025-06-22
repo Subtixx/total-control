@@ -4,6 +4,7 @@ import (
 	"TotalControl/backend/utils"
 	"errors"
 	log "github.com/sirupsen/logrus"
+	lua "github.com/yuin/gopher-lua"
 	"path"
 	"strconv"
 	"time"
@@ -264,4 +265,48 @@ func (appSchemaFile *AppSchemaFile) GetAppFullInstallPath() string {
 	}
 
 	return path.Join(appSchemaFile.Library.Path, "steamapps", "common", appSchemaFile.AppState.InstallDir)
+}
+
+func (appSchemaFile *AppSchemaFile) ToLuaTable(L *lua.LState) *lua.LTable {
+	appTable := L.NewTable()
+	L.SetField(appTable, "app_id", utils.ToLuaValue(L, appSchemaFile.AppState.AppID))
+	L.SetField(appTable, "universe", utils.ToLuaValue(L, appSchemaFile.AppState.Universe))
+	L.SetField(appTable, "name", utils.ToLuaValue(L, appSchemaFile.AppState.Name))
+	L.SetField(appTable, "state_flags", utils.ToLuaValue(L, appSchemaFile.AppState.StateFlags))
+	L.SetField(appTable, "install_dir", utils.ToLuaValue(L, appSchemaFile.AppState.InstallDir))
+	L.SetField(appTable, "last_updated", utils.ToLuaValue(L, appSchemaFile.AppState.LastUpdated.Unix()))
+	L.SetField(appTable, "last_played", utils.ToLuaValue(L, appSchemaFile.AppState.LastPlayed.Unix()))
+	L.SetField(appTable, "size_on_disk", utils.ToLuaValue(L, appSchemaFile.AppState.SizeOnDisk))
+	L.SetField(appTable, "staging_size", utils.ToLuaValue(L, appSchemaFile.AppState.StagingSize))
+	L.SetField(appTable, "build_id", utils.ToLuaValue(L, appSchemaFile.AppState.BuildID))
+	L.SetField(appTable, "last_owner", utils.ToLuaValue(L, appSchemaFile.AppState.LastOwner))
+	L.SetField(appTable, "download_type", utils.ToLuaValue(L, appSchemaFile.AppState.DownloadType))
+	L.SetField(appTable, "update_result", utils.ToLuaValue(L, appSchemaFile.AppState.UpdateResult))
+	L.SetField(appTable, "bytes_to_download", utils.ToLuaValue(L, appSchemaFile.AppState.BytesToDownload))
+	L.SetField(appTable, "bytes_downloaded", utils.ToLuaValue(L, appSchemaFile.AppState.BytesDownloaded))
+	L.SetField(appTable, "bytes_to_stage", utils.ToLuaValue(L, appSchemaFile.AppState.BytesToStage))
+	L.SetField(appTable, "bytes_staged", utils.ToLuaValue(L, appSchemaFile.AppState.BytesStaged))
+	L.SetField(appTable, "target_build_id", utils.ToLuaValue(L, appSchemaFile.AppState.TargetBuildID))
+	L.SetField(appTable, "auto_update_behavior", utils.ToLuaValue(L, appSchemaFile.AppState.AutoUpdateBehavior))
+	L.SetField(appTable, "allow_other_downloads_while_running", utils.ToLuaValue(L, appSchemaFile.AppState.AllowOtherDownloadsWhileRunning))
+	L.SetField(appTable, "scheduled_auto_update", utils.ToLuaValue(L, appSchemaFile.AppState.ScheduledAutoUpdate))
+	installedDepotsTable := L.NewTable()
+	for depotID, depot := range appSchemaFile.AppState.InstalledDepots {
+		depotTable := L.NewTable()
+		L.SetField(depotTable, "depot_id", utils.ToLuaValue(L, depot.DepotID))
+		L.SetField(depotTable, "manifest", utils.ToLuaValue(L, depot.Manifest))
+		L.SetField(depotTable, "size", utils.ToLuaValue(L, depot.Size))
+		L.SetField(installedDepotsTable, depotID, depotTable)
+	}
+	L.SetField(appTable, "installed_depots", installedDepotsTable)
+	L.SetField(appTable, "user_config", utils.ToLuaValue(L, appSchemaFile.AppState.UserConfig.Language))
+	L.SetField(appTable, "mounted_config", utils.ToLuaValue(L, appSchemaFile.AppState.MountedConfig.Language))
+	if appSchemaFile.Library != nil {
+		libraryTable := appSchemaFile.Library.ToLuaTable(L)
+		L.SetField(appTable, "library", libraryTable)
+	} else {
+		log.Warn("LibraryFolder is nil, cannot set library field in Lua table")
+		L.SetField(appTable, "library", lua.LNil)
+	}
+	return appTable
 }

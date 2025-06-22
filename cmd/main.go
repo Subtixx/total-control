@@ -12,18 +12,19 @@ import (
 var gamePath *string
 var logPath *string
 var logLevel *string
+var steamInstance *steam.Steam
 
 func app() {
 	log.Info("Starting TotalControl...")
 	// Initialize the plugin manager
-	pluginManager, err := scripting.NewPluginManager("plugins")
+	pluginManager, err := scripting.NewPluginManager("plugins", steamInstance)
 	if err != nil {
 		log.Fatalf("Failed to initialize plugin manager: %v", err)
 	}
 
 	// Iterate through loaded plugins and print their details
 	for _, plugin := range pluginManager.GetLoadedPlugins() {
-		log.Info("\n" + plugin.PluginInfo.String())
+		//log.Info("\n" + plugin.PluginInfo.String())
 		isInstalled, err := plugin.DetectGameInstallation(*gamePath)
 		if err != nil {
 			log.Errorf("Failed to detect game installation: %v", err)
@@ -35,9 +36,7 @@ func app() {
 			log.Warnf("Game installation not found for plugin: %s", plugin.Name)
 		}
 	}
-	pluginManager.Shutdown()
 
-	steamInstance := steam.NewSteam()
 	log.Infof("Steam installation path: %s", steamInstance.InstallPath)
 	log.Infof("Found %d library folders", len(steamInstance.LibraryFolders))
 	log.Infof("Found %d installed games", len(steamInstance.AppSchemas))
@@ -48,7 +47,7 @@ func app() {
 				size = 0
 			}
 
-			log.Infof("Game %s (%s vs %s)",
+			log.Debugf("Game %s (%s vs %s)",
 				game.AppState.Name,
 				utils.FormatBytes(size),
 				utils.FormatBytes(game.AppState.SizeOnDisk),
@@ -63,7 +62,7 @@ func app() {
 		if game.AppState.LastPlayed.Unix() == 0 {
 			lastPlayed = "Never Played"
 		}
-		log.Infof("%s - %s = %s (%s) | %s, %s",
+		log.Debugf("%s - %s = %s (%s) | %s, %s",
 			game.AppState.AppID,
 			game.AppState.Name,
 			game.GetAppFullInstallPath(),
@@ -72,6 +71,8 @@ func app() {
 			lastPlayed,
 		)
 	}
+
+	pluginManager.Shutdown()
 
 	/*
 			plugin, err := scripting.LoadLuaPlugin("plugins/factorio")
@@ -137,8 +138,8 @@ func app() {
 	*/
 }
 
-func packPlugin(pluginDir *string) {
-	plugin, err := scripting.LoadLuaPlugin(*pluginDir)
+func packPlugin(pm *scripting.PluginManager, pluginDir *string) {
+	plugin, err := scripting.LoadLuaPlugin(pm, *pluginDir)
 	if err != nil {
 		log.Fatalf("Failed to load Lua plugin: %v", err)
 	}
@@ -177,11 +178,16 @@ func main() {
 	if gamePath == nil || *gamePath == "" {
 		log.Fatal("Game path is required")
 	}
+	steamInstance = steam.NewSteam()
 
 	if *pluginDir != "" {
 		log.Infof("Loading plugin from directory: %s", *pluginDir)
 		if *pluginPack {
-			packPlugin(pluginDir)
+			pluginManager, err := scripting.NewPluginManager("plugins", steamInstance)
+			if err != nil {
+				log.Fatalf("Failed to initialize plugin manager: %v", err)
+			}
+			packPlugin(pluginManager, pluginDir)
 			return
 		}
 		return
