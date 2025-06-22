@@ -2,8 +2,11 @@ package steam
 
 import (
 	"TotalControl/backend/utils"
+	"errors"
 	log "github.com/sirupsen/logrus"
+	"path"
 	"strconv"
+	"time"
 )
 
 /*
@@ -49,6 +52,8 @@ import (
 }
 */
 
+var ErrInvalidData = errors.New("invalid data format")
+
 type InstalledDepots struct {
 	DepotID  string `json:"depotid"`
 	Manifest string `json:"manifest"`
@@ -69,8 +74,8 @@ type AppState struct {
 	Name                            string                      `json:"name"`
 	StateFlags                      int                         `json:"stateflags"`
 	InstallDir                      string                      `json:"installdir"`
-	LastUpdated                     int64                       `json:"lastupdated"`
-	LastPlayed                      int64                       `json:"lastplayed"`
+	LastUpdated                     time.Time                   `json:"lastupdated"`
+	LastPlayed                      time.Time                   `json:"lastplayed"`
 	SizeOnDisk                      int64                       `json:"sizeondisk"`
 	StagingSize                     int64                       `json:"stagingsize"`
 	BuildID                         string                      `json:"buildid"`
@@ -91,7 +96,8 @@ type AppState struct {
 }
 
 type AppSchemaFile struct {
-	AppState AppState `json:"AppState"`
+	Library  *LibraryFolder `json:"-"`
+	AppState AppState       `json:"AppState"`
 }
 
 func NewInstalledDepots(data map[string]interface{}) *InstalledDepots {
@@ -144,7 +150,7 @@ func NewUserConfig(data map[string]interface{}) *UserConfig {
 	}
 }
 
-func NewAppSchemaFile(data map[string]interface{}) *AppSchemaFile {
+func NewAppSchemaFile(libraryFolder *LibraryFolder, data map[string]interface{}) *AppSchemaFile {
 	appState := data["AppState"].(map[string]interface{})
 	installedDepots := make(map[string]*InstalledDepots)
 
@@ -162,15 +168,19 @@ func NewAppSchemaFile(data map[string]interface{}) *AppSchemaFile {
 		targetBuildID = ""
 	}
 
+	lastUpdatedTime := utils.GetTimeFromMap("lastupdated", appState)
+	lastPlayedTime := utils.GetTimeFromMap("LastPlayed", appState)
+
 	return &AppSchemaFile{
+		Library: libraryFolder,
 		AppState: AppState{
 			AppID:                           appState["appid"].(string),
 			Universe:                        appState["Universe"].(string),
 			Name:                            appState["name"].(string),
 			StateFlags:                      utils.StringToInt(appState["StateFlags"]),
 			InstallDir:                      appState["installdir"].(string),
-			LastUpdated:                     utils.StringToInt64(appState["lastupdated"]),
-			LastPlayed:                      utils.StringToInt64(appState["LastPlayed"]),
+			LastUpdated:                     lastUpdatedTime,
+			LastPlayed:                      lastPlayedTime,
 			SizeOnDisk:                      utils.StringToInt64(appState["SizeOnDisk"]),
 			StagingSize:                     utils.StringToInt64(appState["StagingSize"]),
 			BuildID:                         appState["buildid"].(string),
@@ -192,6 +202,22 @@ func NewAppSchemaFile(data map[string]interface{}) *AppSchemaFile {
 	}
 }
 
+func ReadAppSchemaFile(libraryFolder *LibraryFolder, filePath string) (*AppSchemaFile, error) {
+	data, err := ReadVDF(filePath)
+	if err != nil {
+		log.Errorf("Failed to read AppSchemaFile: %s", err)
+		return nil, err
+	}
+
+	appSchemaFile := NewAppSchemaFile(libraryFolder, data)
+	if appSchemaFile == nil {
+		log.Error("Failed to create AppSchemaFile from data")
+		return nil, ErrInvalidData
+	}
+
+	return appSchemaFile, nil
+}
+
 func (appState *AppState) String() string {
 	return "AppState{\n" +
 		"\t\tAppID: " + appState.AppID + ",\n" +
@@ -199,8 +225,8 @@ func (appState *AppState) String() string {
 		"\t\tName: " + appState.Name + ",\n" +
 		"\t\tStateFlags: " + strconv.Itoa(appState.StateFlags) + ",\n" +
 		"\t\tInstallDir: " + appState.InstallDir + ",\n" +
-		"\t\tLastUpdated: " + strconv.FormatInt(appState.LastUpdated, 10) + ",\n" +
-		"\t\tLastPlayed: " + strconv.FormatInt(appState.LastPlayed, 10) + ",\n" +
+		"\t\tLastUpdated: " + strconv.FormatInt(appState.LastUpdated.Unix(), 10) + ",\n" +
+		"\t\tLastPlayed: " + strconv.FormatInt(appState.LastPlayed.Unix(), 10) + ",\n" +
 		"\t\tSizeOnDisk: " + strconv.FormatInt(appState.SizeOnDisk, 10) + ",\n" +
 		"\t\tStagingSize: " + strconv.FormatInt(appState.StagingSize, 10) + ",\n" +
 		"\t\tBuildID: " + appState.BuildID + ",\n" +
@@ -229,4 +255,13 @@ func (appSchemaFile *AppSchemaFile) String() string {
 	return "AppSchemaFile{\n" +
 		"\t" + appSchemaFile.AppState.String() + "\n" +
 		"}"
+}
+
+func (appSchemaFile *AppSchemaFile) GetAppFullInstallPath() string {
+	if appSchemaFile.Library == nil {
+		log.Warn("LibraryFolder is nil, cannot get full install path")
+		return ""
+	}
+
+	return path.Join(appSchemaFile.Library.Path, "steamapps", "common", appSchemaFile.AppState.InstallDir)
 }
