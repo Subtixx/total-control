@@ -101,3 +101,19 @@ func ArrayContains(slice []string, item string) bool {
 	}
 	return false
 }
+
+func FormatBytes(bytes int64) string {
+	if bytes < 0 {
+		return "0B"
+	}
+
+	units := []string{"B", "KB", "MB", "GB", "TB"}
+	unitIndex := 0
+
+	for bytes >= 1024 && unitIndex < len(units)-1 {
+		bytes /= 1024
+		unitIndex++
+	}
+
+	return strconv.FormatInt(bytes, 10) + units[unitIndex]
+}
