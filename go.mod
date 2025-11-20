@@ -1,14 +1,16 @@
 module TotalControl
 
-go 1.23.0
+go 1.24.0
 
 toolchain go1.24.4
 
 require (
 	github.com/google/uuid v1.6.0
+	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/wailsapp/wails/v2 v2.10.1
 	github.com/yuin/gopher-lua v1.1.1
+	golang.org/x/sys v0.38.0
 )
 
 replace github.com/yuin/gopher-lua => github.com/subtixx/gopher-lua v0.0.0-20250617083229-cef39b125c26
@@ -27,7 +29,6 @@ require (
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c // indirect
-	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/samber/lo v1.51.0 // indirect
 	github.com/tkrajina/go-reflector v0.5.8 // indirect
@@ -35,10 +36,9 @@ require (
 	github.com/valyala/fasttemplate v1.2.2 // indirect
 	github.com/wailsapp/go-webview2 v1.0.21 // indirect
 	github.com/wailsapp/mimetype v1.4.1 // indirect
-	golang.org/x/crypto v0.39.0 // indirect
-	golang.org/x/net v0.41.0 // indirect
-	golang.org/x/sys v0.33.0 // indirect
-	golang.org/x/text v0.26.0 // indirect
+	golang.org/x/crypto v0.45.0 // indirect
+	golang.org/x/net v0.47.0 // indirect
+	golang.org/x/text v0.31.0 // indirect
 )
 
 // replace github.com/wailsapp/wails/v2 v2.10.1 => /home/subtixx/go/pkg/mod
